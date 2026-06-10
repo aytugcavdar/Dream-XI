@@ -16,6 +16,13 @@ export interface Player {
     passAccuracy: number;
     xG: number;
   };
+}export interface DbPlayerTemplate {
+  name: string;
+  position: 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' | 'RW' | 'CF' | 'ST';
+  gp: 'GK' | 'DEF' | 'MID' | 'ATT';
+  rating: number;
+  years?: number[];
+  bio?: string;
 }
 
 export interface NationalTeam {
@@ -128,3 +135,16 @@ export interface GameState {
   simulationResult: SimulationResult | null;
   tacticalStyle?: string;
 }
+
+/** Computed chemistry breakdown returned by the BuildPhase useMemo. */
+export interface ChemistryBreakdown {
+  chemistry: number;
+  preferredPositions: number;
+  countryCore: { team: NationalTeam; count: number } | null;
+  eraCore: { year: string; count: number } | null;
+  activePartnerships: Array<{ name: string; desc: string }>;
+}
+
+/** Valid sort keys for the ResultPhase squad table. */
+export type SortKey = 'rating' | 'goals' | 'assists' | 'xG';
+

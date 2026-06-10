@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Player, NationalTeam, SimulationResult, GameRecord } from '@/types';
+import { Player, NationalTeam, SimulationResult, GameRecord, SortKey } from '@/types';
+import { MAX_HISTORY_RECORDS } from '@/lib/constants';
 import { Award, Trophy, ChevronRight, Sparkles, BarChart3, Medal, Calendar, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -31,7 +32,7 @@ export default function ResultPhase({
   onOpenPlayerModal
 }: ResultPhaseProps) {
   const [historyList, setHistoryList] = useState<GameRecord[]>([]);
-  const [sortBy, setSortBy] = useState<'rating' | 'goals' | 'assists' | 'xG'>('rating');
+  const [sortBy, setSortBy] = useState<SortKey>('rating');
   const hasSaved = useRef(false);
 
   // Load and save historic record when result mounts
@@ -74,7 +75,7 @@ export default function ResultPhase({
         cleanSheets: result.teamStats.cleanSheets
       };
 
-      // Add to beginning, filter out any duplicates by ID to be extremely safe, trim to 10 max
+      // Add to beginning, filter out any duplicates by ID to be safe, trim to MAX_HISTORY_RECORDS
       const combined = [newRecord, ...loaded];
       const uniqueMap = new Map<string, GameRecord>();
       combined.forEach(item => {
@@ -82,7 +83,7 @@ export default function ResultPhase({
           uniqueMap.set(item.id, item);
         }
       });
-      const updated = Array.from(uniqueMap.values()).slice(0, 10);
+      const updated = Array.from(uniqueMap.values()).slice(0, MAX_HISTORY_RECORDS);
       localStorage.setItem('dreamxi_history', JSON.stringify(updated));
       setTimeout(() => {
         setHistoryList(updated);
@@ -375,7 +376,7 @@ export default function ResultPhase({
                   return (
                     <button
                       key={opt}
-                      onClick={() => setSortBy(opt as any)}
+                      onClick={() => setSortBy(opt as SortKey)}
                       className={`px-2 py-1 rounded capitalize transition-all ${
                         isActive ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-400 hover:text-zinc-200'
                       }`}

@@ -1,5 +1,7 @@
 import { GameState, Player, NationalTeam, SimulationResult, MatchResult, PlayerMatchStats, PlayerSeasonStats } from '../types';
 import { teams } from '../data/teams';
+import { PARTNERSHIPS } from './constants';
+import { simulatePlayerMatchStats, selectManOfTheMatch } from './engine.player-stats';
 
 // Weighted random selection helper
 function pickWeighted<T>(items: T[], weights: number[]): T {
@@ -50,18 +52,6 @@ export function simulate(state: GameState): SimulationResult {
   // Calculate Average Squad Rating with Legendary Partnerships bonus of +4 per pair
   let partnershipBonus = 0;
   const playerNames = squadPlayers.map(p => p.name.toLowerCase());
-  const PARTNERSHIPS = [
-    { p1: 'Kroos', p2: 'Müller' },
-    { p1: 'Platini', p2: 'Tigana' },
-    { p1: 'Zidane', p2: 'Henry' },
-    { p1: 'Pelé', p2: 'Garrincha' },
-    { p1: 'Maradona', p2: 'Careca' },
-    { p1: 'Ronaldinho', p2: 'Ronaldo Nazário' },
-    { p1: 'Hakan Şükür', p2: 'İlhan Mansız' },
-    { p1: 'Nesta', p2: 'Maldini' },
-    { p1: 'Xavi', p2: 'Iniesta' },
-    { p1: 'Messi', p2: 'Di María' }
-  ];
   PARTNERSHIPS.forEach(pair => {
     const hasP1 = playerNames.some(name => name.includes(pair.p1.toLowerCase()));
     const hasP2 = playerNames.some(name => name.includes(pair.p2.toLowerCase()));
@@ -300,124 +290,4 @@ export function simulate(state: GameState): SimulationResult {
   };
 }
 
-// Generates stats for individual players during a specific match
-function simulatePlayerMatchStats(squad: Player[], teamGoals: number, wasDrawWithPens: boolean, style: string): PlayerMatchStats[] {
-  const statsList: PlayerMatchStats[] = [];
 
-  // Goal scorer distribution weights
-  const goalWeights = squad.map(p => {
-    let base = p.positionGroup === 'ATT' ? 12 : p.positionGroup === 'MID' ? 4 : p.positionGroup === 'DEF' ? 1 : 0.001;
-    if (style === 'route-one' && (p.position === 'ST' || p.position === 'CF')) {
-      base += 6; // Route-one targets the ST
-    }
-    return base * (p.rating / 50);
-  });
-
-  // Distribute goals
-  const goalsAllocation: { [playerId: string]: number } = {};
-  squad.forEach(p => { goalsAllocation[p.id] = 0; });
-
-  let goalsToAssign = teamGoals;
-  while (goalsToAssign > 0) {
-    const luckyPlayer = pickWeighted(squad, goalWeights);
-    // GKs don't score easily
-    if (luckyPlayer.positionGroup === 'GK' && Math.random() < 0.99) {
-      continue;
-    }
-    goalsAllocation[luckyPlayer.id]++;
-    goalsToAssign--;
-  }
-
-  // Distribute assists (usually 50-70% of goals have assists)
-  const assistWeights = squad.map(p => {
-    const base = p.positionGroup === 'MID' ? 12 : p.positionGroup === 'ATT' ? 5 : p.positionGroup === 'DEF' ? 2 : 0.1;
-    return base * (p.rating / 50);
-  });
-
-  const assistsAllocation: { [playerId: string]: number } = {};
-  squad.forEach(p => { assistsAllocation[p.id] = 0; });
-
-  let assistsToAssign = 0;
-  for (let g = 0; g < teamGoals; g++) {
-    if (Math.random() < 0.75) {
-      assistsToAssign++;
-    }
-  }
-
-  while (assistsToAssign > 0) {
-    const luckyPlayer = pickWeighted(squad, assistWeights);
-    assistsAllocation[luckyPlayer.id]++;
-    assistsToAssign--;
-  }
-
-  // Generate other metrics per player
-  squad.forEach(p => {
-    const goals = goalsAllocation[p.id];
-    const assists = assistsAllocation[p.id];
-
-    // Compute realistic position-based base metrics
-    let xG = 0;
-    if (p.positionGroup === 'ATT') {
-      xG = parseFloat((goals * 0.45 + Math.random() * 0.4 + 0.1).toFixed(2));
-    } else if (p.positionGroup === 'MID') {
-      xG = parseFloat((goals * 0.2 + Math.random() * 0.2 + 0.05).toFixed(2));
-    } else {
-      xG = parseFloat((goals * 0.1 + Math.random() * 0.1).toFixed(2));
-    }
-
-    let passAccuracy = 70 + Math.floor(Math.random() * 20);
-    if (p.positionGroup === 'MID') {
-      passAccuracy = 82 + Math.floor(Math.random() * 15);
-      if (style === 'tiki-taka') passAccuracy += 6;
-    } else if (p.positionGroup === 'GK') {
-      passAccuracy = 60 + Math.floor(Math.random() * 22);
-    }
-    passAccuracy = Math.min(99, passAccuracy);
-
-    let interceptions = Math.floor(Math.random() * 3);
-    if (p.positionGroup === 'DEF') {
-      interceptions = 3 + Math.floor(Math.random() * 6);
-      if (style === 'gegenpress') interceptions += 3;
-    } else if (p.positionGroup === 'MID') {
-      interceptions = 1 + Math.floor(Math.random() * 5);
-      if (style === 'gegenpress') interceptions += 2;
-    }
-
-    // Match rating calculation
-    let matchRating = 6.0 + Math.random() * 1.5;
-    
-    // Rating adjustments based on performance/base capability
-    matchRating += (p.rating - 75) * 0.06; // higher rated players play better on average
-    matchRating += goals * 1.2; // heavy bonus for scoring
-    matchRating += assists * 0.8; // bonus for assists
-    
-    if (goals === 0 && assists === 0 && p.positionGroup === 'ATT') {
-      matchRating -= 0.5; // attackers quiet without goal involvement
-    }
-
-    if (p.positionGroup === 'DEF' && teamGoals > 2) {
-      matchRating += 0.3; // defender general flow
-    }
-
-    matchRating = Math.max(5.0, Math.min(10.0, parseFloat(matchRating.toFixed(1))));
-
-    statsList.push({
-      playerId: p.id,
-      playerName: p.name,
-      goals,
-      assists,
-      xG,
-      passAccuracy,
-      interceptions,
-      rating: matchRating
-    });
-  });
-
-  return statsList;
-}
-
-// Pick the squad player with the highest rating / game impact
-function selectManOfTheMatch(stats: PlayerMatchStats[]): string {
-  const sorted = [...stats].sort((a, b) => b.rating - a.rating || (b.goals * 3 + b.assists * 2) - (a.goals * 3 + a.assists * 2));
-  return sorted[0]?.playerName || 'Unknown Player';
-}

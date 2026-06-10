@@ -8,8 +8,11 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  output: 'export',
+  basePath: process.env.GITHUB_ACTIONS === 'true' ? '/Dream-XI' : '',
   // Allow access to remote image placeholder.
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

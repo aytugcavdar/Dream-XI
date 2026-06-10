@@ -1,0 +1,102 @@
+import { Player } from '../../types';
+
+export const germanyLegends: Player[] = [
+  {
+    id: 'beckenbauer',
+    name: 'Franz Beckenbauer',
+    country: 'germany',
+    position: 'CB',
+    positionGroup: 'DEF',
+    rating: 97,
+    worldCups: [1966, 1970, 1974],
+    era: 'Vintage Era',
+    bio: 'The "Kaiser" invented the modern Libero (sweeper) position. Captained West Germany to the 1974 trophy on home soil and played with a broken shoulder in 1970.',
+    legendary: true,
+    wcStats: { goals: 5, assists: 3, matches: 18, passAccuracy: 92, xG: 2.2 }
+  },
+  {
+    id: 'muller_gerd',
+    name: 'Gerd Müller',
+    country: 'germany',
+    position: 'ST',
+    positionGroup: 'ATT',
+    rating: 96,
+    worldCups: [1970, 1974],
+    era: 'Vintage Era',
+    bio: '"Der Bomber" was the ultimate goal poacher. Scored the winning goal in the 1974 Final and managed 10 goals in the 1970 edition alone.',
+    legendary: true,
+    wcStats: { goals: 14, assists: 3, matches: 13, passAccuracy: 75, xG: 12.8 }
+  },
+  {
+    id: 'matthaus',
+    name: 'Lothar Matthäus',
+    country: 'germany',
+    position: 'CM',
+    positionGroup: 'MID',
+    rating: 95,
+    worldCups: [1982, 1986, 1990, 1994, 1998],
+    era: '1990s Nostalgia',
+    bio: 'Played in a record-equalling 5 World Cup tournaments, captaining Germany to victory in 1990. Diego Maradona described him as his toughest ever opponent.',
+    legendary: true,
+    wcStats: { goals: 6, assists: 3, matches: 25, passAccuracy: 89, xG: 3.5 }
+  },
+  {
+    id: 'klose',
+    name: 'Miroslav Klose',
+    country: 'germany',
+    position: 'ST',
+    positionGroup: 'ATT',
+    rating: 93,
+    worldCups: [2002, 2006, 2010, 2014],
+    era: 'Golden 1990s & 2000s',
+    bio: 'The all-time leading goal scorer in FIFA World Cup history with 16 goals. A humble team player who won the 2014 tournament in Brazil.',
+    legendary: true,
+    wcStats: { goals: 16, assists: 3, matches: 24, passAccuracy: 78, xG: 14.5 }
+  },
+  {
+    id: 'lahm',
+    name: 'Philipp Lahm',
+    country: 'germany',
+    position: 'RB',
+    positionGroup: 'DEF',
+    rating: 93,
+    worldCups: [2006, 2010, 2014],
+    era: 'Early 2000s',
+    bio: 'An incredibly smart, versatile defender described by Pep Guardiola as the most intelligent player he ever coached. Captained the 2014 champions.',
+    legendary: true,
+    wcStats: { goals: 1, assists: 3, matches: 20, passAccuracy: 91, xG: 0.5 }
+  },
+  {
+    id: 'neuer',
+    name: 'Manuel Neuer',
+    country: 'germany',
+    position: 'GK',
+    positionGroup: 'GK',
+    rating: 94,
+    worldCups: [2010, 2014, 2018, 2022],
+    era: 'Modern Era',
+    bio: 'Redefined modern waste-management and goalkeeping as a "sweeper-keeper." Won the Golden Glove and the World Cup title in 2014.',
+    legendary: false,
+    wcStats: { goals: 0, assists: 0, matches: 19, passAccuracy: 87, xG: 0.0 }
+  },
+];
+
+export const germanyRealPlayers = [
+  { name: 'Karl-Heinz Rummenigge', position: 'ST' as const, gp: 'ATT' as const, rating: 92, years: [1978, 1982, 1986], bio: 'Two-time Ballon d\'Or winner and clinical forward who captained West Germany to two World Cup finals.' },
+  { name: 'Rudi Völler', position: 'ST' as const, gp: 'ATT' as const, rating: 91, years: [1986, 1990, 1994], bio: 'Highly prolific striker who scored in the 1986 Final and won the 1990 trophy.' },
+  { name: 'Andreas Brehme', position: 'LB' as const, gp: 'DEF' as const, rating: 90, years: [1986, 1990, 1994], bio: 'One of the greatest set-piece and crossing full-backs ever; scored the 1990 Final winning penalty.' },
+  { name: 'Pierre Littbarski', position: 'RW' as const, gp: 'ATT' as const, rating: 89, years: [1982, 1986, 1990], bio: 'Elusive and highly skillful dribbling winger who starred in the 1982, 1986, and 1990 runs.' },
+  { name: 'Jürgen Klinsmann', position: 'ST' as const, gp: 'ATT' as const, rating: 91, years: [1990, 1994, 1998], bio: 'Lethal tournament scorer who won the 1990 World Cup and notched 11 World Cup goals.' },
+  { name: 'Jürgen Kohler', position: 'CB' as const, gp: 'DEF' as const, rating: 90, years: [1990, 1994, 1998], bio: 'One of the toughest, most uncompromising man-markers in football history.' },
+  { name: 'Harald Schumacher', position: 'GK' as const, gp: 'GK' as const, rating: 89, years: [1982, 1986], bio: 'Dominant and fierce goalkeeper who led West Germany to consecutive World Cup finals.' },
+  { name: 'Bodo Illgner', position: 'GK' as const, gp: 'GK' as const, rating: 88, years: [1990, 1994], bio: 'Composed goalkeeper who became the first to keep a clean sheet in a World Cup Final (1990).' },
+  { name: 'Guido Buchwald', position: 'CB' as const, gp: 'DEF' as const, rating: 88, years: [1990, 1994], bio: 'A tactical defender famous for completely neutralizing Diego Maradona in the 1990 Final.' },
+  { name: 'Toni Kroos', position: 'CM' as const, gp: 'MID' as const, rating: 91, years: [2010, 2014, 2018], bio: 'German sniper with outstanding laser-accuracy passes, master of the 2014 midfield.' },
+  { name: 'Bastian Schweinsteiger', position: 'CM' as const, gp: 'MID' as const, rating: 90, years: [2006, 2010, 2014], bio: 'The bloodied soldier who gave a masterclass of defensive grit in the 2014 Final.' },
+  { name: 'Thomas Müller', position: 'CAM' as const, gp: 'MID' as const, rating: 89, years: [2010, 2014, 2018, 2022], bio: 'The "Raumdeuter" (Space Investigator), scoring 10 goals across 2010 & 2014 World Cups.' },
+  { name: 'Oliver Kahn', position: 'GK' as const, gp: 'GK' as const, rating: 91, years: [1998, 2002, 2006], bio: '"Der Titan," the only goalkeeper in history to win the World Cup Golden Ball (2002).' },
+  { name: 'Michael Ballack', position: 'CM' as const, gp: 'MID' as const, rating: 89, years: [2002, 2006], bio: 'Powerful midfield leader with clinical long-range shooting and headers.' },
+  { name: 'Mesut Özil', position: 'CAM' as const, gp: 'MID' as const, rating: 89, years: [2010, 2014, 2018], bio: 'Wizard of Oz, visionary playmaker of the 2014 World Cup champions.' },
+  { name: 'Mats Hummels', position: 'CB' as const, gp: 'DEF' as const, rating: 89, years: [2014, 2018], bio: 'Superb ball-playing center-back whose header knocked out France in the 2014 Quarter-Final.' },
+  { name: 'Mario Götze', position: 'CAM' as const, gp: 'MID' as const, rating: 87, years: [2014], bio: 'Scored the unforgettable, breathtaking extra-time winner in the 2014 World Cup Final.' },
+];

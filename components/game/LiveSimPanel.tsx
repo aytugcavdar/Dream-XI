@@ -395,10 +395,12 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
               </span>
             </div>
 
-            {/* Shootout Pen notification under standard clock */}
+            {/* Shootout penalty notification under standard clock */}
             {matchMinute >= 90 && activeMatch.teamGoals === activeMatch.opponentGoals && (
               <span className="font-mono text-[8px] tracking-wider text-emerald-400 font-black uppercase mt-2 animate-pulse">
-                ({activeMatch.won ? 'Won Shootout 5-4' : 'Lost Shootout 3-4'})
+                {activeMatch.won
+                  ? `(Won ${4 + Math.floor(activeMatch.opponentStrength % 2)}-${3 + Math.floor(activeMatch.opponentStrength % 2)} pens)`
+                  : `(Lost ${3 - Math.floor(activeMatch.opponentStrength % 2)}-${4 - Math.floor(activeMatch.opponentStrength % 2)} pens)`}
               </span>
             )}
           </div>

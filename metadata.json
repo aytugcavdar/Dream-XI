@@ -1,0 +1,6 @@
+{
+  "name": "Dream XI",
+  "description": "Build your dream team from historic FIFA World Cup squads and simulate knockout matches in a vintage sports manager simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

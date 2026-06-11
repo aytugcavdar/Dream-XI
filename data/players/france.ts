@@ -57,14 +57,14 @@ export const franceLegends: Player[] = [
 
 export const franceRealPlayers = [
   { name: 'Antoine Griezmann', position: 'CAM', gp: 'MID', rating: 90, years: [2014, 2018, 2022], bio: 'France\'s tactical genius, leading the transition and chance creation.' },
-  { name: 'N\'Golo Kanté', position: 'CDM', gp: 'MID', rating: 91, years: [2018, 2022], bio: 'Tireless midfield engine who carried France to the World Cup gold in 2018.' },
+  { name: 'N\'Golo Kanté', position: 'CDM', gp: 'MID', rating: 91, years: [2018], bio: 'Tireless midfield engine who carried France to the World Cup gold in 2018.' },
   { name: 'Patrick Vieira', position: 'CDM', gp: 'MID', rating: 92, years: [1998, 2002, 2006], bio: 'Lethal combination of physical dominance and elegant technical skill.' },
   { name: 'Raphaël Varane', position: 'CB', gp: 'DEF', rating: 88, years: [2014, 2018, 2022], bio: 'Champions-built swift defender, crucial in France\'s 2018 defensive wall.' },
   { name: 'Hugo Lloris', position: 'GK', gp: 'GK', rating: 87, years: [2010, 2014, 2018, 2022], bio: 'Long-serving captain who lifted the 2018 World Cup trophy in Moscow.' },
-  { name: 'Karim Benzema', position: 'ST', gp: 'ATT', rating: 91, years: [2014, 2022], bio: 'Ballon d\'Or winner, highly complete forward with deep creative linkup play.' },
+  { name: 'Karim Benzema', position: 'ST', gp: 'ATT', rating: 91, years: [2014], bio: 'Ballon d\'Or winner, highly complete forward with deep creative linkup play.' },
   { name: 'Jean Tigana', position: 'CM', gp: 'MID', rating: 90, years: [1982, 1986], bio: 'The tireless engine of the Carré d\'As (Magic Square) midfield, known for his high energy.' },
   { name: 'Alain Giresse', position: 'CAM', gp: 'MID', rating: 89, years: [1982, 1986], bio: 'A highly intelligent, compact playmaker who combined brilliantly with Platini in the 1980s.' },
-  { name: 'Luis Fernández', position: 'CDM', gp: 'MID', rating: 88, years: [1986, 1990], bio: 'The passionate defensive anchor of France\'s legendary 1980s midfield.' },
-  { name: 'Manuel Amoros', position: 'RB', gp: 'DEF', rating: 88, years: [1982, 1986, 1990], bio: 'Outstanding fullback who won the Best Young Player award in 1982 and starred in 1986.' },
+  { name: 'Luis Fernández', position: 'CDM', gp: 'MID', rating: 88, years: [1986], bio: 'The passionate defensive anchor of France\'s legendary 1980s midfield.' },
+  { name: 'Manuel Amoros', position: 'RB', gp: 'DEF', rating: 88, years: [1982, 1986], bio: 'Outstanding fullback who won the Best Young Player award in 1982 and starred in 1986.' },
   { name: 'Joël Bats', position: 'GK', gp: 'GK', rating: 87, years: [1986], bio: 'Elastic goalkeeper who saved penalties from Zico and Socrates in the epic 1986 shootout.' }
 ];

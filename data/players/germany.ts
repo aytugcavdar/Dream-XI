@@ -75,7 +75,7 @@ export const germanyLegends: Player[] = [
     rating: 94,
     worldCups: [2010, 2014, 2018, 2022],
     era: 'Modern Era',
-    bio: 'Redefined modern waste-management and goalkeeping as a "sweeper-keeper." Won the Golden Glove and the World Cup title in 2014.',
+    bio: 'Redefined modern space-management and goalkeeping as a "sweeper-keeper." Won the Golden Glove and the World Cup title in 2014.',
     legendary: false,
     wcStats: { goals: 0, assists: 0, matches: 19, passAccuracy: 87, xG: 0.0 }
   },

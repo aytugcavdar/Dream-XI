@@ -15,11 +15,13 @@ import { loadHistory, clearHistory, normalizeAndSave } from '@/lib/history';
 export type HistorySortBy = 'date_new' | 'date_old' | 'rating_high' | 'score_ratio';
 
 export interface ManagerRank {
-  title: string;
+  titleEn: string;
+  titleTr: string;
   badge: string;
   color: string;
   accent: string;
-  desc: string;
+  descEn: string;
+  descTr: string;
 }
 
 export interface HistoryStats {
@@ -31,46 +33,58 @@ export interface HistoryStats {
 
 function computeManagerRank(wins: number): ManagerRank {
   if (wins === 0) return {
-    title: 'Draft Çaylağı (Rookie)',
+    titleEn: 'Draft Rookie',
+    titleTr: 'Draft Çaylağı',
     badge: '🌱',
     color: 'border-zinc-800 bg-zinc-950 text-zinc-400',
     accent: 'bg-zinc-500',
-    desc: 'Kariyerinin başındasın. İlk kupanı kazanarak adını kupa odasına yazdırmaya başla!',
+    descEn: 'You are at the start of your career. Win your first cup to register your name in the cabinet!',
+    descTr: 'Kariyerinin başındasın. İlk kupanı kazanarak adını kupa odasına yazdırmaya başla!',
   };
   if (wins === 1) return {
-    title: 'Bronz Direktör (Bronze Director)',
+    titleEn: 'Bronze Director',
+    titleTr: 'Bronz Direktör',
     badge: '🥉',
     color: 'border-amber-900/50 bg-amber-950/10 text-amber-500',
     accent: 'bg-amber-600',
-    desc: 'Tarihin ilk şampiyonluğunu kazandın! Bir taktik dâhisi olma yolunda ilk adım.',
+    descEn: 'Won your historic first championship! The first step towards becoming a tactical genius.',
+    descTr: 'Tarihin ilk şampiyonluğunu kazandın! Bir taktik dâhisi olma yolunda ilk adım.',
   };
   if (wins === 2) return {
-    title: 'Gümüş Taktisyen (Silver Tactician)',
+    titleEn: 'Silver Tactician',
+    titleTr: 'Gümüş Taktisyen',
     badge: '🥈',
     color: 'border-slate-800 bg-slate-950/25 text-slate-300',
     accent: 'bg-slate-400',
-    desc: 'İki dünya kupası şampiyonluğu! Squad simülasyonlarında rüzgarı arkana aldın.',
+    descEn: 'Two World Cup championships! You have the wind at your back in squad simulations.',
+    descTr: 'İki dünya kupası şampiyonluğu! Squad simülasyonlarında rüzgarı arkana aldın.',
   };
   if (wins === 3) return {
-    title: 'Altın Antrenör (Gold Coach)',
+    titleEn: 'Gold Coach',
+    titleTr: 'Altın Antrenör',
     badge: '🥇',
     color: 'border-yellow-900/40 bg-yellow-950/20 text-yellow-400',
     accent: 'bg-yellow-500',
-    desc: 'Üç yıldızlı baş antrenör! Oyuncuların senin taktik planlarını sahada kusursuz uyguluyor.',
+    descEn: 'Three-star head coach! Your players execute your tactical plans flawlessly on the pitch.',
+    descTr: 'Üç yıldızlı baş antrenör! Oyuncuların senin taktik planlarını sahada kusursuz uyguluyor.',
   };
   if (wins === 4) return {
-    title: 'Efsanevi Menajer (Legendary Manager)',
+    titleEn: 'Legendary Manager',
+    titleTr: 'Efsanevi Menajer',
     badge: '🏆',
     color: 'border-[#e8ff3b]/20 bg-[#e8ff3b]/5 text-[#e8ff3b]',
     accent: 'bg-[#e8ff3b]',
-    desc: 'Deltalar üstü taktiksel kurgu! Küresel futbol federasyonları senin taktik formasyonlarını inceliyor.',
+    descEn: 'Master of high-level tactical setups! Global federations study your custom structures.',
+    descTr: 'Deltalar üstü taktiksel kurgu! Küresel futbol federasyonları senin taktik formasyonlarını inceliyor.',
   };
   return {
-    title: 'GOAT Dehası (Immortal GOAT)',
+    titleEn: 'Immortal GOAT',
+    titleTr: 'GOAT Dehası',
     badge: '👑',
     color: 'border-purple-900/40 bg-purple-950/25 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)]',
     accent: 'bg-purple-500',
-    desc: 'Taktik evreninin tartışmasız en büyüğü! Rekorlar kupa müzeni doldurdu taşıyor.',
+    descEn: 'The undisputed greatest of the tactical universe! Trophies fill your historic cabinet.',
+    descTr: 'Taktik evreninin tartışmasız en büyüğü! Rekorlar kupa müzeni doldurdu taşıyor.',
   };
 }
 

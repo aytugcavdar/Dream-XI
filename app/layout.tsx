@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   description: 'Randomly roll national teams, build your dream squad of historic football legends, select tactical formations, and simulate knockout tournaments.',
 };
 
+import { LanguageProvider } from '@/components/LanguageProvider';
+
 export default function RootLayout({
   children,
 }: {
@@ -29,7 +31,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} dark`} suppressHydrationWarning>
       <body className="bg-[#0a0c0f] text-[#f0f0f0] min-h-screen antialiased select-none selection:bg-[#e8ff3b] selection:text-black" suppressHydrationWarning>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

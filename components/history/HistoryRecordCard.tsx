@@ -4,12 +4,15 @@ import React from 'react';
 import { Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 import { GameRecord } from '@/types';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface HistoryRecordCardProps {
   record: GameRecord;
 }
 
 export default function HistoryRecordCard({ record }: HistoryRecordCardProps) {
+  const { t, isMounted } = useLanguage();
+
   const formattedDate = new Date(record.playedAt).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -51,7 +54,7 @@ export default function HistoryRecordCard({ record }: HistoryRecordCardProps) {
               <span>{formattedDate}</span>
             </span>
             <span>•</span>
-            <span>Squad Rating: <strong className="text-zinc-300 font-bold">{record.teamRating} OVR</strong></span>
+            <span>{isMounted ? t('build_rating') : 'AVG RATING'}: <strong className="text-zinc-300 font-bold">{record.teamRating} OVR</strong></span>
           </div>
         </div>
       </div>
@@ -60,7 +63,7 @@ export default function HistoryRecordCard({ record }: HistoryRecordCardProps) {
       <div className="flex items-center gap-2 bg-zinc-900/40 border border-zinc-900 p-2 rounded-xl text-[11px] font-mono md:max-w-xs w-full md:w-auto">
         <span className="text-xs">👑</span>
         <div className="min-w-0">
-          <span className="text-[9px] text-zinc-650 block uppercase leading-none mb-0.5">Mvp player</span>
+          <span className="text-[9px] text-zinc-650 block uppercase leading-none mb-0.5">{isMounted ? t('result_mvp') : 'Mvp player'}</span>
           <strong className="text-zinc-300 truncate font-bold block">{record.mvpName}</strong>
         </div>
       </div>
@@ -68,7 +71,7 @@ export default function HistoryRecordCard({ record }: HistoryRecordCardProps) {
       {/* Right: Score and Win Indicator */}
       <div className="flex items-center justify-between md:justify-end gap-4 border-t md:border-t-0 border-zinc-900/60 pt-3 md:pt-0">
         <div className="md:text-right">
-          <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest block leading-none mb-1">Cup Score</span>
+          <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest block leading-none mb-1">{isMounted ? t('history_cup_score') : 'Cup Score'}</span>
           <span className={`font-display font-black text-lg tracking-widest ${record.won ? 'text-[#e8ff3b]' : 'text-zinc-100'}`}>
             {record.score}
           </span>
@@ -78,7 +81,7 @@ export default function HistoryRecordCard({ record }: HistoryRecordCardProps) {
           record.won 
             ? 'bg-emerald-500/10 text-[#e8ff3b] border border-emerald-500/25' 
             : 'bg-zinc-900 text-zinc-500 border border-zinc-850'
-        }`} title={record.won ? 'World Cup Winner!' : 'Knocked Out'}>
+        }`} title={record.won ? (isMounted ? t('history_world_cup_winner') : 'World Cup Winner!') : (isMounted ? t('history_knocked_out') : 'Knocked Out')}>
           {record.won ? '🏆' : '✗'}
         </div>
       </div>

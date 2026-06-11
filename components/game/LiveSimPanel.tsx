@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Player, NationalTeam, SimulationResult, MatchResult } from '@/types';
 import { Play, SkipForward, ArrowRight, Trophy, AlertCircle, Shield, Award, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface LiveSimPanelProps {
   team: NationalTeam;
@@ -12,8 +13,8 @@ interface LiveSimPanelProps {
   onComplete: () => void;
 }
 
-// Set of atmospheric generic commentary lines
-const COMMENTARY_MIDFIELD = [
+// Set of atmospheric generic commentary lines in English
+const COMMENTARY_MIDFIELD_EN = [
   "fights for possession in the center circle.",
   "orchestrates a series of neat short plays.",
   "finds space on the flank and curls a direct ball.",
@@ -23,7 +24,7 @@ const COMMENTARY_MIDFIELD = [
   "pulls off classic trickery to escape two defenders."
 ];
 
-const COMMENTARY_DEFENSE = [
+const COMMENTARY_DEFENSE_EN = [
   "makes a massive sliding clearance inside the 18-yard box.",
   "organizes the backline to capture the offside trap.",
   "comfortably collects an incoming long-range ball.",
@@ -31,120 +32,223 @@ const COMMENTARY_DEFENSE = [
   "stands tall to block a heavy drive from the opponent striker."
 ];
 
-// Resolve efsanevi (legendary) moves for our selected super-icons in Turkish commentary lines
-function getPlayerIconicAction(playerName: string, actionSeed: number): string | null {
+// Set of atmospheric generic commentary lines in Turkish
+const COMMENTARY_MIDFIELD_TR = [
+  "orta yuvarlakta top kapma mücadelesi veriyor.",
+  "bir dizi kısa ve organizes pasla oyunu kuruyor.",
+  "kanatta boşluk bulup ceza sahasına ortalıyor.",
+  "kritik bir pası keserek rakip kontratağı önlüyor.",
+  "ceza sahasına 40 metrelik muazzam bir çapraz pas gönderiyor.",
+  "arkadan faulle durduruluyor, hakem oyuncuyu uyarıyor.",
+  "klas bir çalımla iki savunmacıdan sıyrılıyor."
+];
+
+const COMMENTARY_DEFENSE_TR = [
+  "ceza sahası içinde yatarak kritik bir müdahaleyle topu uzaklaştırıyor.",
+  "defans hattını organize ederek rakibi ofsayt tuzağına düşürüyor.",
+  "gelen uzun topu rahatça kontrol ediyor.",
+  "tehlikeli bir köşe vuruşunda yükselip topu uzaklaştırıyor.",
+  "rakip forvetin sert şutunu gövdesiyle bloke ediyor."
+];
+
+// Resolve efsanevi (legendary) moves for our selected super-icons in English or Turkish
+function getPlayerIconicAction(playerName: string, actionSeed: number, isTurkish: boolean): string | null {
   const name = playerName.toLowerCase();
   
   if (name.includes('pele') || name.includes('pelé')) {
-    const actions = [
+    const actionsTr = [
       "efsanevi rövaşatasıyla kaleciyi çaresiz bırakıyor ve trübünleri ayağa kaldırıyor! ⚽🌟",
       "havadan gelen topu muhteşem göğüs kontrolüyle yumuşatıp harika bir voleyle doksana asıyor! 🌟",
       "ipe dizer gibi üç savunmacıyı geçip efsane bir plase gol imzalıyor! 👑"
     ];
+    const actionsEn = [
+      "leaves the goalkeeper helpless and raises the stadium to its feet with a legendary bicycle kick! ⚽🌟",
+      "cushions a high ball with a magnificent chest control and volleys it into the top corner! 🌟",
+      "dribbles past three defenders like training cones to score an iconic placed goal! 👑"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('maradona')) {
-    const actions = [
+    const actionsTr = [
       "orta sahadan aldığı topla tüm rakip takımı çalıma dizerek kaleciyi de avlıyor! 👑🇦🇷",
       "rakip kalecinin üstünden rüya gibi bir aşırtma vuruşla adeta büyü yapıyor! ⚽",
       "üstün top tekniğiyle rakiplerini şaşkına çevirip bacak arasından milimetrik asistini fırlatıyor! 🪄"
     ];
+    const actionsEn = [
+      "takes the ball from the midfield, dribbles past the entire opposing team, and beats the keeper! 👑🇦🇷",
+      "magically chips the ball over the opposing goalkeeper, leaving everyone in awe! ⚽",
+      "confuses defenders with his superior ball control and releases a pinpoint assist through the legs! 🪄"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('zidane')) {
-    const actions = [
+    const actionsTr = [
       "sol ayağıyla adeta fizik kurallarına meydan okuyan mermi gibi bir vole golü gönderiyor! 🪄🇫🇷",
       "kendi ekseninde zarifçe dönerek (Zidane Ruleti) rakiplerini adeta oyundan siliyor! ✨",
       "kusursuz futbol zekasıyla forvet hattını tek pasta kaleciyle karşı karşıya bırakıyor!"
     ];
+    const actionsEn = [
+      "unleashes a bullet volley with his left foot, defying the laws of physics! 🪄🇫🇷",
+      "gracefully spins around (Zidane Roulette) to completely eliminate defenders from the play! ✨",
+      "sends a defense-splitting pass with flawless football intelligence to put the striker one-on-one!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('nazário') || (name.includes('ronaldo') && !name.includes('cristiano'))) {
-    const actions = [
+    const actionsTr = [
       "roket hızıyla depara kalkıp meşhur efsanevi kaleci çalımlarından biriyle topu boş ağlara bırakıyor! 🇧🇷⚡",
       "rakiplerini üst üste yaptığı seri çalımlarla çaresiz bırakıp resital sunuyor! ⚽",
       "patlayıcı gücüyle savunmayı unufak edip muazzam bir gol vuruşu çıkarıyor! 🔥"
     ];
+    const actionsEn = [
+      "sprints at rocket speed and leaves the keeper behind with his famous trademark stepovers to score! 🇧🇷⚡",
+      "presents a football masterclass by dribbling past multiple defenders in quick succession! ⚽",
+      "demolishes the defense with his explosive power and finishes with an absolute rocket! 🔥"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('ronaldinho')) {
-    const actions = [
+    const actionsTr = [
       "büyüleyici bir 'no-look pass' (bakmadan pas) vererek tribünleri çılgına çeviriyor! 🤙🇧🇷",
       "akılalmaz bir 'elastico' çalımıyla sol çizgiden ceza sahasına slalom yapıyor! ⚡",
       "uzak köşeye inanılmaz bir falsolu frikik vuruşu çekerek kaleciyi donduruyor! 🪄"
     ];
+    const actionsEn = [
+      "unleashes a mesmerizing 'no-look pass', sending the crowd into pure ecstasy! 🤙🇧🇷",
+      "executes an unbelievable 'elastico' to slalom into the penalty area from the left wing! ⚡",
+      "freezes the goalkeeper with a curling free-kick into the far top corner! 🪄"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('kroos')) {
-    const actions = [
+    const actionsTr = [
       "orta sahada milimetrik paslarıyla oyunu yöneten bir orkestra şefi gibi parlıyor! 🇩🇪🪄",
       "ceza sahası dışından adeta elle bırakmış gibi köşeye meşhur plase golünü atıyor! ⚽",
       "harika bir korner vuruşuyla topu doğrudan arkadaşının kafasına adrese teslim gönderiyor!"
     ];
+    const actionsEn = [
+      "shines in midfield like an orchestra conductor with his millimeter-precise passes! 🇩🇪🪄",
+      "scores his trademark placed goal into the corner from outside the area, precise as always! ⚽",
+      "sends a corner kick directly to his teammate's head, delivered on a silver platter!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('müller') || name.includes('muller')) {
-    const actions = [
+    const actionsTr = [
       "ceza sahası içindeki harika önsezisiyle topun düşeceği yeri koklayıp golünü yapıyor! 🇩🇪🔥",
       "rakipleri şaşırtan akıl dolu boş koşusuyla rakip defans hattını darmadağın ediyor!",
       "savunmadan seken topu kurnazca kontrol edip anında sert bir şutla filelere yolluyor!"
     ];
+    const actionsEn = [
+      "sniffs out the landing zone with his incredible instincts in the box and taps it in! 🇩🇪🔥",
+      "tears the opposition defensive line apart with an intelligent off-the-ball run!",
+      "controls a rebound with cunning poise and instantly blasts it into the net!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('maldini')) {
-    const actions = [
+    const actionsTr = [
       "asla geçilmeyen bir duvar misali tertemiz kayarak müdahaleyle topu söküp alıyor! 🛡️🇮🇹",
       "kusursuz pozisyon bilgisiyle rakibin en tehlikeli kontrasını büyüteçle keser gibi engelliyor!",
       "savunmadan liderce oyunu kurup arkadaşlarını muazzam yönlendiriyor!"
     ];
+    const actionsEn = [
+      "slides in with a perfectly clean tackle to dispossess the attacker like an impassable wall! 🛡️🇮🇹",
+      "anticipates the play with perfect positioning, stopping a dangerous counter-attack in its tracks!",
+      "launches a defensive build-up with leadership, guiding his teammates masterfully!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('nesta')) {
-    const actions = [
+    const actionsTr = [
       "cerrah titizliğinde bir hamleyle rakibin ayağındaki topu nefis bir şekilde kapıyor! 🛡️",
       "hava topunda rakiplerine milim geçit vermeyerek tehlikeyi taca püskürtüyor!",
       "yerden kritik bir müdahaleyle ceza sahasındaki ölümcül pas kanalını kapatıyor!"
     ];
+    const actionsEn = [
+      "wins the ball with surgical precision, dispossessing the attacker beautifully! 🛡️",
+      "dominates the aerial duel, clearing the danger out for a throw-in!",
+      "cuts off a deadly passing lane inside the penalty box with a crucial slide!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('platini')) {
-    const actions = [
+    const actionsTr = [
       "zekice döşediği frikik barajının hemen üstünden topu çatala fırlatıyor! 🎯🇫🇷",
       "derin bir oyun okuma becerisiyle ceza sahasına muhteşem bir tek top indiriyor!",
       "orta sahada tek dokunuşla rakip defansın kimyasını bozuyor!"
     ];
+    const actionsEn = [
+      "curls a free-kick over the wall and sends it straight into the top bin! 🎯🇫🇷",
+      "drops a brilliant one-touch pass into the penalty area with deep vision!",
+      "disrupts the opponent's defensive chemistry with a single touch in midfield!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('xavi')) {
-    const actions = [
+    const actionsTr = [
       "360 derece dönerek yaptığı tescilli 'La Pelopina' dönüşüyle üç presçiyi nakavt ediyor! 🇪🇸🪄",
       "iğne deliğinden iplik geçirir gibi savunmanın arkasına gizemli bir pas bırakıyor! ⚽",
       "orta sahada pas istasyonu oluşturarak takımın oyun ritmini mükemmel kontrol ediyor!"
     ];
+    const actionsEn = [
+      "knocks out three pressing opponents with his trademark 360-degree 'La Pelopina' turn! 🇪🇸🪄",
+      "threads a mystical pass behind the defense like threading a needle! ⚽",
+      "controls the game's rhythm perfectly by serving as the central passing hub in midfield!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('iniesta')) {
-    const actions = [
+    const actionsTr = [
       "dar alanda meşhur 'La Croqueta' çalımıyla rakibinden tereyağı gibi sıyrılıp geçiyor! 🇪🇸⚡",
       "zarif bir havadan ara pasıyla forvete nefis bir asist ikramı yapıyor! 🪄",
       "pres altındayken soğukkanlılığıyla topu oyunda tutup takımı rahatlatıyor!"
     ];
+    const actionsEn = [
+      "slithers past his defender with his famous 'La Croqueta' in a tight space! 🇪🇸⚡",
+      "provides a beautiful assist to the striker with an elegant lofted through-ball! 🪄",
+      "keeps possession under heavy pressure with absolute composure to relieve the team!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('messi')) {
-    const actions = [
+    const actionsTr = [
       "sağ kanattan depar atarak 4 kişiyi ipe dizercesine geçip şov yapıyor! 🐐👑🇲🇦",
       "enfes bir serbest vuruşla topu kalecinin uzanamayacağı köşeye imzalıyor! ⚽",
       "akılalmaz bir aşırtma şutla savunma bloğunu tamamen geçersiz kılmaktadır!"
     ];
+    const actionsEn = [
+      "embarks on a solo run from the right wing, dribbling past 4 players to put on a show! 🐐👑🇲🇦",
+      "curls a beautiful free-kick into the top corner out of the goalkeeper's reach! ⚽",
+      "renders the defense obsolete with a mind-blowing chipped shot!"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
   if (name.includes('di maría') || name.includes('di maria')) {
-    const actions = [
+    const actionsTr = [
       "sol kanattan efsanevi 'rabona' pası fırlatıp resital sunuyor! 🪄",
       "sağ kanattan sızarak efsanevi aşırtma vuruşlarından birini gole çeviriyor!",
       "önemli anların adamı olduğunu yine nefis tekniğiyle kanıtlıyor! ⭐"
     ];
+    const actionsEn = [
+      "launches a legendary 'rabona' pass from the left flank, putting on a spectacular show! 🪄",
+      "cuts in from the right and converts with one of his trademark delicate chips!",
+      "proves once again that he is a big-game player with his exquisite technique! ⭐"
+    ];
+    const actions = isTurkish ? actionsTr : actionsEn;
     return actions[actionSeed % actions.length];
   }
 
@@ -152,6 +256,9 @@ function getPlayerIconicAction(playerName: string, actionSeed: number): string |
 }
 
 export default function LiveSimPanel({ team, year, result, onComplete }: LiveSimPanelProps) {
+  const { t, language, isMounted } = useLanguage();
+  const isTr = language === 'tr';
+
   const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
   const [matchMinute, setMatchMinute] = useState(0);
   const [currentOurGoals, setCurrentOurGoals] = useState(0);
@@ -215,7 +322,10 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     setMatchMinute(0);
     setCurrentOurGoals(0);
     setCurrentOpponentGoals(0);
-    setTickerEvents([`🏟️ Welcome to Match Day! The pitch is loaded.`, `📢 Kick-off is imminent. Let's conquer the grid!`]);
+    setTickerEvents([
+      isMounted ? t('sim_welcome') : `🏟️ Welcome to Match Day! The pitch is loaded.`,
+      isMounted ? t('sim_kickoff_imminent') : `📢 Kick-off is imminent. Let's conquer the grid!`
+    ]);
     setMatchStage('PLAYING');
   };
 
@@ -226,14 +336,22 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     setMatchMinute(90);
     
     const finalLogs = [
-      `⏱️ Min 90: Referee blows the final whistle here!`,
-      `🏁 FT Scoreline matches the final model calculations: ${activeMatch.teamGoals} - ${activeMatch.opponentGoals}.`
+      isMounted ? t('sim_min_90_whistle') : `⏱️ Min 90: Referee blows the final whistle here!`,
+      isMounted 
+        ? t('sim_scoreline_matches').replace('{our}', String(activeMatch.teamGoals)).replace('{opp}', String(activeMatch.opponentGoals))
+        : `🏁 FT Scoreline matches the final model calculations: ${activeMatch.teamGoals} - ${activeMatch.opponentGoals}.`
     ];
 
     if (activeMatch.won) {
-      finalLogs.push(`🎉 WIN! ${team.flag} ${team.name} passes to the next round with complete composure.`);
+      finalLogs.push(
+        isMounted 
+          ? t('sim_win_log').replace('{flag}', team.flag).replace('{team}', team.name)
+          : `🎉 WIN! ${team.flag} ${team.name} passes to the next round with complete composure.`
+      );
     } else {
-      finalLogs.push(`💔 LOSS! Elite tactical opposition managed to contain our squads.`);
+      finalLogs.push(
+        isMounted ? t('sim_loss_log') : `💔 LOSS! Elite tactical opposition managed to contain our squads.`
+      );
     }
 
     setTickerEvents(prev => [...prev, ...finalLogs]);
@@ -251,12 +369,16 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
         if (isDraw) {
           const isPenaltiesWin = activeMatch.won;
           const pensText = isPenaltiesWin 
-            ? `🏆 DRAW AFTER TIME! Penalty Shootout initiated... WIN! (${team.name} converts their penalties triumphantly!)`
-            : `❌ DRAW AFTER TIME! Penalty Shootout initiated... LOSS! (Opponent GK pulled off critical saves.)`;
+            ? (isMounted ? t('sim_draw_win').replace('{team}', team.name) : `🏆 DRAW AFTER TIME! Penalty Shootout initiated... WIN! (${team.name} converts their penalties triumphantly!)`)
+            : (isMounted ? t('sim_draw_loss') : `❌ DRAW AFTER TIME! Penalty Shootout initiated... LOSS! (Opponent GK pulled off critical saves.)`);
           
-          setTickerEvents(prev => [...prev, `⏱️ Min 120: Final extra-time whistle!`, pensText]);
+          setTickerEvents(prev => [
+            ...prev, 
+            isMounted ? t('sim_min_120_over') : `⏱️ Min 120: Final extra-time whistle!`, 
+            pensText
+          ]);
         } else {
-          setTickerEvents(prev => [...prev, `⏱️ Min 90: It is all over! Final whistle blown.`]);
+          setTickerEvents(prev => [...prev, isMounted ? t('sim_min_90_over') : `⏱️ Min 90: It is all over! Final whistle blown.`]);
         }
 
         setMatchStage(activeMatch.won ? 'POST_MATCH' : 'ELIMINATED');
@@ -280,25 +402,33 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
         const scorer = ourScorersThisBlock[0].scorer;
         
         // Check for legendary player specific move override!
-        const iconicAction = getPlayerIconicAction(scorer, nextMin);
+        const iconicAction = getPlayerIconicAction(scorer, nextMin, isTr);
         if (iconicAction) {
-          logSnippet = `⚽ Min ${ourScorersThisBlock[0].min}: GOOOOOAL! ${team.flag} ${team.name} golü buluyor! 🌟 ${scorer} ${iconicAction}`;
+          logSnippet = isMounted 
+            ? t('sim_our_goal_iconic').replace('{min}', String(ourScorersThisBlock[0].min)).replace('{flag}', team.flag).replace('{team}', team.name).replace('{scorer}', scorer).replace('{action}', iconicAction)
+            : `⚽ Min ${ourScorersThisBlock[0].min}: GOOOOOAL! ${team.flag} ${team.name} strikes! ${scorer} ${iconicAction}`;
         } else {
-          logSnippet = `⚽ Min ${ourScorersThisBlock[0].min}: GOOOOOAL! ${team.flag} ${team.name} strikes! ${scorer} executes a flawless shot into the net!`;
+          logSnippet = isMounted
+            ? t('sim_our_goal').replace('{min}', String(ourScorersThisBlock[0].min)).replace('{flag}', team.flag).replace('{team}', team.name).replace('{scorer}', scorer)
+            : `⚽ Min ${ourScorersThisBlock[0].min}: GOOOOOAL! ${team.flag} ${team.name} strikes! ${scorer} executes a flawless shot into the net!`;
         }
       } else if (enemyGoalsThisBlock.length > 0) {
         opponentGoalsCount += enemyGoalsThisBlock.length;
-        logSnippet = `⚠️ Min ${enemyGoalsThisBlock[0].min}: GOAL! The opposition exploits our flank defense to slot home.`;
+        logSnippet = isMounted
+          ? t('sim_opp_goal').replace('{min}', String(enemyGoalsThisBlock[0].min))
+          : `⚠️ Min ${enemyGoalsThisBlock[0].min}: GOAL! The opposition exploits our flank defense to slot home.`;
       } else {
         // Deterministic team events using seed modulos
         const eventSeed = nextMin * 73 + activeMatch.opponentStrength;
-        const randomSource = (eventSeed % 2 === 0) ? COMMENTARY_MIDFIELD : COMMENTARY_DEFENSE;
+        const randomSource = (eventSeed % 2 === 0)
+          ? (isTr ? COMMENTARY_MIDFIELD_TR : COMMENTARY_MIDFIELD_EN)
+          : (isTr ? COMMENTARY_DEFENSE_TR : COMMENTARY_DEFENSE_EN);
         
         const randomPlayerIndex = eventSeed % activeMatch.playerStats.length;
         const randomPlayer = activeMatch.playerStats[randomPlayerIndex]?.playerName || 'Player';
         
         // Efsanevi moves commentary insertion
-        const iconicAction = getPlayerIconicAction(randomPlayer, eventSeed);
+        const iconicAction = getPlayerIconicAction(randomPlayer, eventSeed, isTr);
         if (iconicAction) {
           logSnippet = `✨ Min ${nextMin}: [${randomPlayer}] ${iconicAction}`;
         } else {
@@ -314,7 +444,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     }, simPlaySpeed);
 
     return () => clearTimeout(interval);
-  }, [matchStage, matchMinute, activeMatch, goalMinutes, team, simPlaySpeed]);
+  }, [matchStage, matchMinute, activeMatch, goalMinutes, team, simPlaySpeed, isTr, isMounted, t]);
 
   // Proceed to the next knockout round
   const handleNextMatchStep = () => {
@@ -325,6 +455,16 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
       // Completed all matches (won the trophy!)
       setMatchStage('CHAMPION_TRANS');
     }
+  };
+
+  const getLocalizedRound = (roundName: string) => {
+    if (!isMounted) return roundName;
+    const name = roundName.toLowerCase();
+    if (name.includes('16') || name.includes('r16')) return t('sim_round_r16');
+    if (name.includes('quarter')) return t('sim_round_qf');
+    if (name.includes('semi')) return t('sim_round_sf');
+    if (name.includes('final')) return t('sim_round_final');
+    return roundName;
   };
 
   return (
@@ -341,11 +481,13 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="font-bold text-zinc-300 uppercase tracking-widest text-[10px]">ROUND DEPLOYMENT: {activeMatch.round}</span>
+            <span className="font-bold text-zinc-300 uppercase tracking-widest text-[10px]">
+              {isMounted ? t('sim_round_deployment') : 'ROUND DEPLOYMENT'}: {getLocalizedRound(activeMatch.round)}
+            </span>
           </div>
 
           <div className="flex items-center gap-2 text-zinc-500">
-            <span>SPEED:</span>
+            <span>{isMounted ? t('sim_speed') : 'SPEED'}:</span>
             <button 
               onClick={() => setSimPlaySpeed(1200)}
               className={`p-1 px-1.5 rounded text-[9px] font-bold ${simPlaySpeed === 1200 ? 'bg-[#e8ff3b] text-black' : 'hover:text-zinc-300'}`}
@@ -381,7 +523,11 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
           <div className="col-span-3 flex flex-col items-center justify-center">
             {/* MATCH MINUTE CLOCK */}
             <div className="px-2.5 py-1 bg-zinc-950/80 border border-zinc-900 hover:border-[#e8ff3b]/20 rounded-full text-[10px] font-mono tracking-widest text-emerald-400 font-extrabold mb-3">
-              {matchStage === 'PLAYING' ? `LIVE • ${matchMinute}'` : matchStage === 'PRE_MATCH' ? 'PRE-MATCH' : 'FULL TIME'}
+              {matchStage === 'PLAYING'
+                ? `${isMounted ? t('sim_live') : 'LIVE'} • ${matchMinute}'`
+                : matchStage === 'PRE_MATCH'
+                  ? (isMounted ? t('sim_pre_match') : 'PRE-MATCH')
+                  : (isMounted ? t('sim_full_time') : 'FULL TIME')}
             </div>
 
             {/* BIG NUMBERS */}
@@ -461,7 +607,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
             className="py-3 px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white text-[11px] font-mono font-bold uppercase tracking-wider rounded-xl transition-all"
             title="Instant Calculations Bypass viewer"
           >
-            Skip Simulations
+            {isMounted ? t('sim_btn_skip') : 'Skip Simulations'}
           </button>
 
           {/* Core play controls */}
@@ -477,7 +623,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                   className="py-3 px-6 bg-emerald-500 hover:bg-emerald-600 text-black font-display font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center gap-1.5"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>KICK-OFF NOW</span>
+                  <span>{isMounted ? t('sim_btn_kickoff') : 'KICK-OFF NOW'}</span>
                 </motion.button>
               )}
 
@@ -491,7 +637,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                   className="py-3 px-6 bg-zinc-905 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5"
                 >
                   <SkipForward className="w-3.5 h-3.5" />
-                  <span>Fast Forward match</span>
+                  <span>{isMounted ? t('sim_btn_fast_forward') : 'Fast Forward match'}</span>
                 </motion.button>
               )}
 
@@ -504,7 +650,13 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                   onClick={handleNextMatchStep}
                   className="py-3 px-6 bg-[#e8ff3b] text-black hover:bg-[#d6ec2b] font-display font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(232,255,59,0.3)] transition-all flex items-center gap-1.5"
                 >
-                  <span>PROCEED TO {currentMatchIdx < result.matches.length - 1 ? result.matches[currentMatchIdx + 1].round.toUpperCase() : 'FINISH Campaign'}</span>
+                  <span>
+                    {currentMatchIdx < result.matches.length - 1
+                      ? (isMounted
+                          ? t('sim_btn_proceed').replace('{round}', getLocalizedRound(result.matches[currentMatchIdx + 1].round).toUpperCase())
+                          : `PROCEED TO ${result.matches[currentMatchIdx + 1].round.toUpperCase()}`)
+                      : (isMounted ? t('sim_btn_finish') : 'FINISH Campaign')}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </motion.button>
               )}
@@ -518,7 +670,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                   onClick={onComplete}
                   className="py-3 px-6 bg-red-500 hover:bg-red-600 text-white font-display font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center gap-1.5"
                 >
-                  <span>SEE TOURNAMENT REPORT</span>
+                  <span>{isMounted ? t('sim_btn_report') : 'SEE TOURNAMENT REPORT'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </motion.button>
               )}
@@ -533,7 +685,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                   className="py-3 px-8 bg-amber-500 hover:bg-amber-600 text-black font-display font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.4)] transition-all flex items-center gap-2"
                 >
                   <Trophy className="w-4 h-4 fill-current" />
-                  <span>CLAIM CHAMPIONSHIP TROPHY</span>
+                  <span>{isMounted ? t('sim_btn_claim') : 'CLAIM CHAMPIONSHIP TROPHY'}</span>
                 </motion.button>
               )}
             </AnimatePresence>

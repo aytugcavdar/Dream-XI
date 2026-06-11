@@ -13,6 +13,7 @@ import SidebarRollState from './build/SidebarRollState';
 import SidebarActiveDraft from './build/SidebarActiveDraft';
 import PitchCanvas from './build/PitchCanvas';
 import FormationSelector from './build/FormationSelector';
+import { useLanguage } from '@/components/LanguageProvider';
 
 // Re-export for any consumers that still import TACTICAL_STYLES from here
 export { TACTICAL_STYLES };
@@ -44,6 +45,7 @@ export default function BuildPhase({
   onReroll,
   onOpenPlayerModal
 }: BuildPhaseProps) {
+  const { t, language, toggleLanguage, isMounted } = useLanguage();
   // Sound controls
   const [soundEnabled, setSoundEnabled] = useState(true);
   // Persistent AudioContext — reused across calls to avoid GC pressure
@@ -141,7 +143,7 @@ export default function BuildPhase({
                 x2: s2.x,
                 y2: s2.y,
                 type: 'gold',
-                label: '🤝 efsane'
+                label: isMounted ? t('synergy_legend') : '🤝 legend'
               });
             } else if (sameCountry && sameEra) {
               lines.push({
@@ -151,7 +153,7 @@ export default function BuildPhase({
                 x2: s2.x,
                 y2: s2.y,
                 type: 'double-emerald',
-                label: '🧬 uyum'
+                label: isMounted ? t('synergy_chemistry') : '🧬 chemistry'
               });
             } else if (sameCountry) {
               lines.push({
@@ -161,7 +163,7 @@ export default function BuildPhase({
                 x2: s2.x,
                 y2: s2.y,
                 type: 'emerald',
-                label: '🌎 ülke'
+                label: isMounted ? t('synergy_nation') : '🌎 nation'
               });
             } else if (sameEra) {
               lines.push({
@@ -171,7 +173,7 @@ export default function BuildPhase({
                 x2: s2.x,
                 y2: s2.y,
                 type: 'cyan',
-                label: '⏳ dönem'
+                label: isMounted ? t('synergy_era') : '⏳ era'
               });
             }
           }
@@ -179,7 +181,7 @@ export default function BuildPhase({
       }
     }
     return lines;
-  }, [activeFormation, squad]);
+  }, [activeFormation, squad, isMounted, t]);
 
   // Simple Web Audio API Synthesizer sounds for arcade feel
   const playSound = (type: 'roll-tick' | 'roll-stop' | 'select' | 'place' | 'clear' | 'success') => {
@@ -609,7 +611,7 @@ export default function BuildPhase({
             </h1>
           </div>
           <p className="text-xs text-zinc-400 max-w-lg leading-relaxed">
-            Choose your deployment scheme ({formations.find(f => f.id === selectedFormationId)?.name}) and pick 11 icons associated with the {year} team and their historic generation counterparts.
+            {isMounted ? t('build_header_desc').replace('{formation}', formations.find(f => f.id === selectedFormationId)?.name || '').replace('{year}', String(year)) : `Choose your deployment scheme (${formations.find(f => f.id === selectedFormationId)?.name}) and pick 11 icons associated with the ${year} team and their historic generation counterparts.`}
           </p>
         </div>
 
@@ -618,19 +620,25 @@ export default function BuildPhase({
           {/* Rating Badge */}
           <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-900 p-2 px-3 rounded-xl">
             <div className="flex flex-col text-right">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">Avg rating</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">
+                {isMounted ? t('build_rating') : 'Avg rating'}
+              </span>
               <span className="font-display font-black text-xl text-[#e8ff3b]">{averageRating}</span>
             </div>
             <div className="h-6 w-px bg-zinc-850" />
             <div className="flex flex-col text-center">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">Squad</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">
+                {isMounted ? t('build_squad') : 'Squad'}
+              </span>
               <span className="font-display font-black text-xl text-white">
                 {squadCount}<span className="text-zinc-650 font-light text-xs">/11</span>
               </span>
             </div>
             <div className="h-6 w-px bg-zinc-850" />
             <div className="flex flex-col">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">Chemistry</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">
+                {isMounted ? t('build_chemistry_label') : 'Chemistry'}
+              </span>
               <span className="font-display font-black text-xl text-emerald-400">
                 {chemistryBreakdown.chemistry}<span className="text-[#e8ff3b] font-light text-xs">%</span>
               </span>
@@ -638,6 +646,14 @@ export default function BuildPhase({
           </div>
 
           <div className="flex items-center gap-2 ml-auto md:ml-0">
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="text-[10px] font-mono tracking-wider bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 hover:border-zinc-700 hover:text-[#e8ff3b] px-2.5 py-2 rounded-xl text-zinc-400 transition-all uppercase"
+            >
+              {isMounted ? (language === 'en' ? 'TR 🇹🇷' : 'EN 🇬🇧') : '...'}
+            </button>
+
             {/* Sound Toggle */}
             <button
               onClick={() => {
@@ -659,10 +675,10 @@ export default function BuildPhase({
                 id="clear-squad-btn"
                 onClick={handleClearSquad}
                 className="p-2 sm:px-3 sm:py-2 bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 text-zinc-400 hover:text-red-400 rounded-xl flex items-center justify-center gap-1.5 text-xs font-mono transition-all"
-                title="Reset Squad"
+                title={isMounted ? t('build_btn_clear') : 'Reset Squad'}
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Clear</span>
+                <span className="hidden sm:inline">{isMounted ? t('build_btn_clear') : 'Clear'}</span>
               </button>
             )}
 
@@ -673,7 +689,7 @@ export default function BuildPhase({
               className="p-2 sm:px-3 sm:py-2 bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 text-zinc-400 hover:text-white rounded-xl flex items-center justify-center gap-1.5 text-xs font-mono transition-all"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Reroll Team</span>
+              <span className="hidden sm:inline">{isMounted ? t('build_btn_reroll') : 'Reroll Team'}</span>
             </button>
 
             {/* Simulate Trigger */}
@@ -688,7 +704,7 @@ export default function BuildPhase({
               }`}
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Simulate Cup →</span>
+              <span>{isMounted ? t('build_btn_simulate') : 'Simulate Cup →'}</span>
             </button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { AlertTriangle } from 'lucide-react';
 import { Formation } from '@/types';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface FormationSelectorProps {
   formations: Formation[];
@@ -30,11 +31,12 @@ export default function FormationSelector({
   confirmFormationChange,
   setPendingFormationId,
 }: FormationSelectorProps) {
+  const { t, isMounted } = useLanguage();
   return (
     <div className="mb-4">
       <div className="flex flex-col md:flex-row gap-4">
         <div>
-          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block mb-1.5">Deployment Scheme</span>
+          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block mb-1.5">{isMounted ? t('build_scheme') : 'Deployment Scheme'}</span>
           <div className="flex flex-wrap gap-1.5 bg-zinc-950/60 p-1.5 border border-zinc-900 rounded-xl w-fit">
             {formations.map((f) => {
               const isActive = selectedFormationId === f.id;
@@ -57,7 +59,7 @@ export default function FormationSelector({
         </div>
 
         <div>
-          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block mb-1.5">Team Philosophy / Tactical Style</span>
+          <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest block mb-1.5">{isMounted ? t('build_philosophy') : 'Team Philosophy / Tactical Style'}</span>
           <div className="flex flex-wrap gap-1.5 bg-zinc-950/60 p-1.5 border border-zinc-900 rounded-xl w-fit">
             {tacticalStyles.map((style) => {
               const isActive = selectedTacticalStyle === style.id;
@@ -97,20 +99,20 @@ export default function FormationSelector({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs leading-relaxed font-mono">
               <div className="flex items-center gap-2 text-yellow-400">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                <span>Changing formation will reset your current squad. Continue?</span>
+                <span>{isMounted ? t('build_change_formation_warning') : 'Changing formation will reset your current squad. Continue?'}</span>
               </div>
               <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
                 <button
                   onClick={confirmFormationChange}
                   className="px-2.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold uppercase rounded-md tracking-wider text-[10px]"
                 >
-                  Reset & Change
+                  {isMounted ? t('build_btn_reset_change') : 'Reset & Change'}
                 </button>
                 <button
                   onClick={() => setPendingFormationId(null)}
                   className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-white uppercase rounded-md tracking-wider text-[10px]"
                 >
-                  Cancel
+                  {isMounted ? t('build_btn_cancel') : 'Cancel'}
                 </button>
               </div>
             </div>

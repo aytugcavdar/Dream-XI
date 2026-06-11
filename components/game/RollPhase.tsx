@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { NationalTeam } from '@/types';
 import { teams } from '@/data/teams';
 import { Dices, Trophy, Globe, History } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface RollPhaseProps {
   onRoll: (team: NationalTeam, year: number) => void;
@@ -15,11 +15,11 @@ interface RollPhaseProps {
 const LEGENDARY_PLAYERS = ['Pelé', 'Maradona', 'Messi', 'Zidane', 'Cruyff', 'Ronaldo', 'Beckenbauer', 'Baggio', 'Eusébio', 'Modrić', 'Iniesta'];
 
 export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: RollPhaseProps) {
+  const { t, language, toggleLanguage, isMounted } = useLanguage();
   const [isRolling, setIsRolling] = useState(false);
   const [displayFlag, setDisplayFlag] = useState('⚽');
   const [displayName, setDisplayName] = useState('DREAM XI');
   const [displayYear, setDisplayYear] = useState<number | string>('????');
-  const [scrambleNameIndex, setScrambleNameIndex] = useState(0);
 
   // Animated text lists
   const [playerTicker, setPlayerTicker] = useState(LEGENDARY_PLAYERS[0]);
@@ -102,30 +102,52 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Live Simulator</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+              {isMounted ? t('roll_live_simulator') : 'Live Simulator'}
+            </span>
           </div>
-          {historyCount > 0 && (
+          
+          <div className="flex items-center gap-2">
             <button
-              id="history-lobby-btn"
-              onClick={onNavigateHistory}
-              className="flex items-center gap-1.5 px-3 py-1 bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-full text-xs font-mono text-zinc-400 hover:text-[#e8ff3b] transition-all"
+              onClick={toggleLanguage}
+              className="text-[10px] font-mono tracking-wider bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:text-[#e8ff3b] px-2 py-0.5 rounded text-zinc-400 transition-all uppercase"
             >
-              <History className="w-3.5 h-3.5" />
-              <span>History ({historyCount})</span>
+              {isMounted ? (language === 'en' ? 'TR 🇹🇷' : 'EN 🇬🇧') : '...'}
             </button>
-          )}
+
+            {historyCount > 0 && (
+              <button
+                id="history-lobby-btn"
+                onClick={onNavigateHistory}
+                className="flex items-center gap-1.5 px-3 py-1 bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-full text-xs font-mono text-zinc-400 hover:text-[#e8ff3b] transition-all"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>{isMounted ? `${t('roll_history_btn')} (${historyCount})` : `History (${historyCount})`}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Hero title / cycling text */}
         <div className="text-center mb-10">
           <span className="font-mono text-xs text-[#e8ff3b] bg-[#e8ff3b]/10 border border-[#e8ff3b]/20 px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">
-            FIFA Legends Edition
+            {isMounted ? t('roll_legends_edition') : 'FIFA Legends Edition'}
           </span>
           <h1 className="font-display font-bold text-3xl sm:text-4xl text-zinc-100 mt-2 mb-3 leading-tight tracking-tight">
-            Build your <span className="text-[#e8ff3b] underline decoration-[#e8ff3b]/40 underline-offset-4">{playerTicker}</span> dream team
+            {isMounted ? (
+              <>
+                {t('roll_ticker_dream_team') === 'rüya takımını kur' ? (
+                  <>Kendi <span className="text-[#e8ff3b] underline decoration-[#e8ff3b]/40 underline-offset-4">{playerTicker}</span> rüya takımını kur</>
+                ) : (
+                  <>Build your <span className="text-[#e8ff3b] underline decoration-[#e8ff3b]/40 underline-offset-4">{playerTicker}</span> dream team</>
+                )}
+              </>
+            ) : (
+              <>Build your <span className="text-[#e8ff3b] underline decoration-[#e8ff3b]/40 underline-offset-4">{playerTicker}</span> dream team</>
+            )}
           </h1>
           <p className="text-zinc-400 text-sm max-w-sm mx-auto">
-            Step into the history machine. Randomly draft a historic team and conquer the knockout tournament with your legendary lineup.
+            {isMounted ? t('roll_desc') : 'Step into the history machine. Randomly draft a historic team and conquer the knockout tournament with your legendary lineup.'}
           </p>
         </div>
 
@@ -138,7 +160,9 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
             
             {/* Reel 1: Flag and Nation */}
             <div className="flex flex-col items-center justify-center min-w-[170px]">
-              <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5">National Team</span>
+              <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5">
+                {isMounted ? t('roll_reel_team') : 'National Team'}
+              </span>
               <div className="h-20 flex flex-col items-center justify-center">
                 <span className={`text-4xl mb-1 select-none ${isRolling ? 'animate-bounce' : 'glow-lime'}`}>
                   {displayFlag}
@@ -156,7 +180,9 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
 
             {/* Reel 2: Year */}
             <div className="flex flex-col items-center justify-center min-w-[110px]">
-              <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5">World Cup Year</span>
+              <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1.5">
+                {isMounted ? t('roll_reel_year') : 'World Cup Year'}
+              </span>
               <div className="h-20 flex items-center justify-center">
                 <span className={`font-display font-bold text-4xl tracking-tight ${isRolling ? 'text-zinc-600' : 'text-[#e8ff3b] glow-lime'}`}>
                   {displayYear}
@@ -179,23 +205,29 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
             }`}
           >
             <Dices className={`w-5 h-5 ${isRolling ? 'animate-spin' : 'group-hover:rotate-45 transition-transform'}`} />
-            <span>{isRolling ? 'Locating Vintage Dossier...' : 'Roll the dice →'}</span>
+            <span>{isRolling ? (isMounted ? t('roll_btn_active') : 'Locating Vintage Dossier...') : (isMounted ? t('roll_btn_idle') : 'Roll the dice →')}</span>
           </button>
         </div>
 
-        {/* Small Facts row (24 editions, 25+ nations, 100+ legends) */}
+        {/* Small Facts row */}
         <div className="grid grid-cols-3 gap-2 border-t border-zinc-900 pt-6 mt-8 text-center text-zinc-500">
           <div>
             <div className="font-display font-semibold text-sm text-zinc-300 leading-none mb-1">18</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider">Editions</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider">
+              {isMounted ? t('dashboard_editions') : 'Editions'}
+            </div>
           </div>
           <div className="border-x border-zinc-900">
             <div className="font-display font-semibold text-sm text-zinc-300 leading-none mb-1">26</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider">Nations</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider">
+              {isMounted ? t('dashboard_nations') : 'Nations'}
+            </div>
           </div>
           <div>
             <div className="font-display font-semibold text-sm text-zinc-300 leading-none mb-1">100+</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider">Legends</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider">
+              {isMounted ? t('dashboard_legends') : 'Legends'}
+            </div>
           </div>
         </div>
       </div>
@@ -207,8 +239,12 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
             <Trophy className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-display font-semibold text-xs text-zinc-200 uppercase tracking-widest mb-1">Championship Goals</h4>
-            <p className="text-xs text-zinc-500 leading-relaxed">Assemble 11 players, select tactical formations, and beat 4 heavyweights down the knockout tree.</p>
+            <h4 className="font-display font-semibold text-xs text-zinc-200 uppercase tracking-widest mb-1">
+              {isMounted ? t('roll_guide_goals_title') : 'Championship Goals'}
+            </h4>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              {isMounted ? t('roll_guide_goals_desc') : 'Assemble 11 players, select tactical formations, and beat 4 heavyweights down the knockout tree.'}
+            </p>
           </div>
         </div>
         <div className="bg-zinc-950/40 border border-zinc-900 p-4 rounded-xl flex gap-3 text-left">
@@ -216,8 +252,12 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
             <Globe className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="font-display font-semibold text-xs text-zinc-200 uppercase tracking-widest mb-1">Vintage Dossiers</h4>
-            <p className="text-xs text-zinc-500 leading-relaxed">Unlock historical bios, World Cup campaign scores, and personal records of classic players.</p>
+            <h4 className="font-display font-semibold text-xs text-zinc-200 uppercase tracking-widest mb-1">
+              {isMounted ? t('roll_guide_dossiers_title') : 'Vintage Dossiers'}
+            </h4>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              {isMounted ? t('roll_guide_dossiers_desc') : 'Unlock historical bios, World Cup campaign scores, and personal records of classic players.'}
+            </p>
           </div>
         </div>
       </div>

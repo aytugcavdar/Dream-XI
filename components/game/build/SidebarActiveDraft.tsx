@@ -4,6 +4,7 @@ import React from 'react';
 import { Player, NationalTeam, ChemistryBreakdown } from '@/types';
 import { RotateCcw, Search, Star, Sparkles, Info } from 'lucide-react';
 import { SidebarProgressFooter } from './SidebarRollState';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface SidebarActiveDraftProps {
   currentDraftRoll: { team: NationalTeam; year: number };
@@ -14,7 +15,7 @@ interface SidebarActiveDraftProps {
   setSearchQuery: (q: string) => void;
   filteredPlayers: Player[];
   isPlayerAssigned: (id: string) => boolean;
-  isPositionLimitReached: (position: string) => boolean;
+  isPositionLimitReached: (positionGroup: string) => boolean;
   squadCount: number;
   chemistryBreakdown: ChemistryBreakdown;
   getGroupPill: (group: string) => string;
@@ -42,6 +43,7 @@ export default function SidebarActiveDraft({
   onOpenPlayerModal,
   onCancelSelection,
 }: SidebarActiveDraftProps) {
+  const { t, isMounted } = useLanguage();
   return (
     <div className="bg-zinc-950 border border-zinc-900 p-5 rounded-2xl h-full flex flex-col justify-between">
       <div>
@@ -49,7 +51,7 @@ export default function SidebarActiveDraft({
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <h3 className="font-display font-semibold text-sm uppercase text-white tracking-wider">
-              Roster Draft Pool
+              {isMounted ? t('build_roster_pool') : 'Roster Draft Pool'}
             </h3>
           </div>
         </div>
@@ -59,7 +61,9 @@ export default function SidebarActiveDraft({
           <div className="flex items-center gap-2.5">
             <span className="text-2xl select-none">{currentDraftRoll.team.flag}</span>
             <div className="flex flex-col text-left">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">Country Edition</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">
+                {isMounted ? t('build_country_edition') : 'Country Edition'}
+              </span>
               <strong className="font-display text-xs text-zinc-100 uppercase mt-0.5">
                 {currentDraftRoll.team.name} <span className="text-[#e8ff3b] font-mono">({currentDraftRoll.year})</span>
               </strong>
@@ -73,10 +77,13 @@ export default function SidebarActiveDraft({
                 ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.05)] animate-pulse'
                 : 'bg-zinc-900 border-zinc-900 text-zinc-650 cursor-not-allowed'
             }`}
-            title={rerollsAvailable > 0 ? `Spend 1 Reroll Ticket (${rerollsAvailable} Left)` : 'No Reroll Tickets Left'}
+            title={isMounted 
+              ? (rerollsAvailable > 0 ? t('build_reroll_tooltip').replace('{count}', String(rerollsAvailable)) : t('build_no_reroll_tooltip')) 
+              : (rerollsAvailable > 0 ? `Spend 1 Reroll Ticket (${rerollsAvailable} Left)` : 'No Reroll Tickets Left')
+            }
           >
             <RotateCcw className="w-2.5 h-2.5" />
-            <span>Reroll ({rerollsAvailable})</span>
+            <span>{isMounted ? t('build_btn_reroll_short').replace('{count}', String(rerollsAvailable)) : `Reroll (${rerollsAvailable})`}</span>
           </button>
         </div>
 
@@ -85,7 +92,7 @@ export default function SidebarActiveDraft({
           <div className="mb-4 p-2 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 rounded-xl border border-amber-400/30 text-center animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.15)] select-none">
             <span className="text-[10px] font-mono font-bold text-black uppercase tracking-widest flex items-center justify-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-black shrink-0 fill-current animate-bounce" />
-              <span>✨ ALTIN KART DRAFT SEÇİMİ AKTİF (+2 OVR) ✨</span>
+              <span>{isMounted ? t('build_golden_draft_active') : '✨ GOLDEN DRAFT PICK ACTIVE (+2 OVR) ✨'}</span>
             </span>
           </div>
         )}
@@ -95,22 +102,21 @@ export default function SidebarActiveDraft({
           {!selectedPlayerForAssignment ? (
             <div className="p-2.5 bg-zinc-900/30 border border-zinc-900 text-[11px] text-zinc-400 rounded-lg flex items-center gap-2 font-mono">
               <span className="animate-bounce text-xs">👉</span>
-              <span>Click any player in the pool below to choose them for your line-up!</span>
+              <span>{isMounted ? t('build_draft_instruction_idle') : 'Click any player in the pool below to choose them for your line-up!'}</span>
             </div>
           ) : (
             <div className="p-2.5 bg-emerald-950/30 border border-emerald-900 text-[11px] text-emerald-300 rounded-lg flex items-center justify-between gap-2 font-mono animate-pulse">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs">🎯</span>
                 <span>
-                  Click a glowing <strong className="text-white uppercase">{selectedPlayerForAssignment.positionGroup}</strong> spot on the field to draft{' '}
-                  <strong>{selectedPlayerForAssignment.name}</strong>!
+                  {isMounted ? t('build_draft_instruction_active').replace('{group}', selectedPlayerForAssignment.positionGroup).replace('{name}', selectedPlayerForAssignment.name) : `Click a glowing ${selectedPlayerForAssignment.positionGroup} spot on the field to draft ${selectedPlayerForAssignment.name}!`}
                 </span>
               </div>
               <button
                 onClick={onCancelSelection}
                 className="text-[9px] uppercase hover:text-red-400 border border-dashed border-emerald-800 rounded px-1.5 py-0.5 bg-emerald-950/60"
               >
-                Cancel
+                {isMounted ? t('build_btn_cancel') : 'Cancel'}
               </button>
             </div>
           )}
@@ -121,7 +127,7 @@ export default function SidebarActiveDraft({
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-600" />
           <input
             type="text"
-            placeholder="Search name, position, group..."
+            placeholder={isMounted ? t('build_search_placeholder') : "Search name, position, group..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-zinc-900/60 text-zinc-200 pl-9 pr-4 py-2 text-xs rounded-xl border border-zinc-900 focus:outline-none focus:border-[#e8ff3b] font-mono placeholder:text-zinc-600"
@@ -132,13 +138,13 @@ export default function SidebarActiveDraft({
         <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
           {filteredPlayers.length === 0 ? (
             <div className="text-center py-10 text-zinc-600 font-mono text-xs">
-              No players matching search criteria
+              {isMounted ? t('build_no_players_search') : 'No players matching search criteria'}
             </div>
           ) : (
             filteredPlayers.map((player) => {
               const isAssigned = isPlayerAssigned(player.id);
               const isSelected = selectedPlayerForAssignment?.id === player.id;
-              const isPositionFull = !isAssigned && isPositionLimitReached(player.position);
+              const isPositionFull = !isAssigned && isPositionLimitReached(player.positionGroup);
 
               const isGoldenCard = isGoldenBallActive && (player.rating >= 92 || player.legendary === true);
               const displayRating = isGoldenCard ? Math.min(99, player.rating + 2) : player.rating;
@@ -186,12 +192,12 @@ export default function SidebarActiveDraft({
                         </span>
                         {isPositionFull && (
                           <span className="text-[8px] bg-red-950/40 text-red-400 border border-red-900/40 px-1 py-0.2 rounded font-mono font-bold uppercase shrink-0">
-                            MEVKİ DOLU
+                            {isMounted ? t('build_position_full') : 'POSITION FULL'}
                           </span>
                         )}
                         {isGoldenCard && !isPositionFull && (
                           <span className="text-[8px] bg-amber-400 text-black px-1 py-0.2 rounded font-mono font-bold uppercase shrink-0">
-                            👑 GOLDEN
+                            👑 {isMounted ? t('build_golden_tag') : 'GOLDEN'}
                           </span>
                         )}
                         {isLegendary && !isGoldenCard && !isPositionFull && (
@@ -203,7 +209,7 @@ export default function SidebarActiveDraft({
                         <span>•</span>
                         <span>{player.era.split(' ')[0]}</span>
                         <span>•</span>
-                        <span>Goals: {player.wcStats.goals}</span>
+                        <span>{isMounted ? t('build_card_goals') : 'Goals'}: {player.wcStats.goals}</span>
                       </div>
                     </div>
                   </button>
@@ -213,7 +219,7 @@ export default function SidebarActiveDraft({
                     <button
                       onClick={() => onOpenPlayerModal(player)}
                       className="p-1 px-1.5 hover:bg-zinc-800 rounded border border-zinc-850 text-zinc-500 hover:text-white transition-all"
-                      title="View player statistics file"
+                      title={isMounted ? t('build_view_stats_tooltip') : 'View player statistics file'}
                     >
                       <Info className="w-3.5 h-3.5" />
                     </button>

@@ -16,13 +16,38 @@ export interface Player {
     passAccuracy: number;
     xG: number;
   };
-}export interface DbPlayerTemplate {
+}
+
+export interface DbPlayerTemplate {
   name: string;
   position: 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' | 'RW' | 'CF' | 'ST';
   gp: 'GK' | 'DEF' | 'MID' | 'ATT';
   rating: number;
   years?: number[];
   bio?: string;
+}
+
+export interface OfficialSquadPlayer {
+  squadNo: number;
+  name: string;
+  position: Player['position'];
+  positionGroup: Player['positionGroup'];
+  club?: string;
+  captain?: boolean;
+  rating?: number;
+  status?: 'active' | 'withdrawn' | 'replacement';
+  replaced?: string;
+  notes?: string;
+}
+
+export interface OfficialSquad {
+  teamId: string;
+  year: number;
+  manager: string;
+  source: string;
+  verifiedAt: string;
+  notes?: string;
+  players: OfficialSquadPlayer[];
 }
 
 export interface NationalTeam {
@@ -147,4 +172,3 @@ export interface ChemistryBreakdown {
 
 /** Valid sort keys for the ResultPhase squad table. */
 export type SortKey = 'rating' | 'goals' | 'assists' | 'xG';
-

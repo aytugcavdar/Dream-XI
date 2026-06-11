@@ -5,6 +5,7 @@ import { Player, NationalTeam, SimulationResult, GameRecord, SortKey } from '@/t
 import { MAX_HISTORY_RECORDS } from '@/lib/constants';
 import { Award, Trophy, ChevronRight, Sparkles, BarChart3, Medal, Calendar, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface ResultPhaseProps {
   team: NationalTeam;
@@ -165,6 +166,8 @@ export default function ResultPhase({
     }
   };
 
+  const { t, language, isMounted } = useLanguage();
+
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6 animate-slide-up flex flex-col justify-between">
       
@@ -200,14 +203,18 @@ export default function ResultPhase({
               </div>
 
               {/* Champion Statement */}
-              <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Tournament Result</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                {isMounted ? (language === 'en' ? 'Tournament Result' : 'Turnuva Sonucu') : 'Tournament Result'}
+              </span>
               <h2 className="font-display font-black text-2xl sm:text-3xl text-white mt-1 uppercase tracking-tight">
-                {result.won ? 'World Champions!' : 'Campaign Finished'}
+                {result.won 
+                  ? (isMounted ? t('result_won_title') : 'World Champions!') 
+                  : (isMounted ? t('result_lost_title') : 'Campaign Finished')}
               </h2>
               <p className="text-xs text-zinc-400 mt-2 mb-6 max-w-xs mx-auto">
                 {result.won 
-                  ? `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.` 
-                  : `Knocked out in the ${result.exitRound}. Keep tuning tactics for another historical trial.`}
+                  ? (isMounted ? (language === 'en' ? `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.` : `Tebrikler! ${team.flag} ${team.name} tüm eleme ağacını harika bir oyunla fethetti.`) : `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.`) 
+                  : (isMounted ? (language === 'en' ? `Knocked out in the ${result.exitRound}. Keep tuning tactics for another historical trial.` : `${result.exitRound} aşamasında elendiniz. Yeni bir tarihi deneme için taktiklerinizi ayarlamaya devam edin.`) : `Knocked out in the ${result.exitRound}. Keep tuning tactics for another historical trial.`)}
               </p>
 
               {/* Big Score pop */}
@@ -221,7 +228,7 @@ export default function ResultPhase({
 
               {/* Formation tag */}
               <div className="mt-4 font-mono text-[10px] text-zinc-500 uppercase tracking-widest">
-                TACTICAL MODEL • {formationId} ({result.teamRating} OVR)
+                {isMounted ? (language === 'en' ? 'TACTICAL MODEL' : 'TAKTİKSEL MODEL') : 'TACTICAL MODEL'} • {formationId} ({result.teamRating} OVR)
               </div>
             </div>
           </div>
@@ -229,7 +236,7 @@ export default function ResultPhase({
           {/* Matches Timeline Display */}
           <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-5 space-y-4">
             <h3 className="font-display font-bold text-xs x:text-sm uppercase text-zinc-200 tracking-wider">
-              Knockout Stage Progression
+              {isMounted ? t('result_summary') : 'Knockout Stage Progression'}
             </h3>
 
             <div className="space-y-2.5">
@@ -265,7 +272,7 @@ export default function ResultPhase({
                           ? 'bg-emerald-500/10 text-[#e8ff3b] border border-emerald-500/10' 
                           : 'bg-red-500/10 text-red-400 border border-red-500/10'
                       }`}>
-                        {match.won ? 'WIN' : 'LOSS'}
+                        {match.won ? (isMounted ? (language === 'en' ? 'WIN' : 'GALİBİYET') : 'WIN') : (isMounted ? (language === 'en' ? 'LOSS' : 'MAĞLUBİYET') : 'LOSS')}
                       </span>
                     </div>
                   </div>
@@ -277,24 +284,32 @@ export default function ResultPhase({
           {/* Team Campaign Statistics block */}
           <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-5 space-y-4">
             <h3 className="font-display font-bold text-xs uppercase text-zinc-200 tracking-wider">
-              Squad Team Metrics
+              {isMounted ? (language === 'en' ? 'Squad Team Metrics' : 'Takım Metrikleri') : 'Squad Team Metrics'}
             </h3>
 
             <div className="grid grid-cols-2 gap-3 font-mono text-xs">
               <div className="bg-zinc-900/20 border border-zinc-900 p-3 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Clean Sheets</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                  {isMounted ? t('history_clean_sheets') : 'Clean Sheets'}
+                </span>
                 <span className="font-display font-black text-xl text-zinc-100">{result.teamStats.cleanSheets}</span>
               </div>
               <div className="bg-zinc-900/20 border border-zinc-900 p-3 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Total Campaign xG</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                  {isMounted ? (language === 'en' ? 'Total Campaign xG' : 'Toplam Kampanya xG') : 'Total Campaign xG'}
+                </span>
                 <span className="font-display font-black text-xl text-zinc-100">{result.teamStats.totalXG}</span>
               </div>
               <div className="bg-zinc-900/20 border border-zinc-900 p-3 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Avg Possession</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                  {isMounted ? (language === 'en' ? 'Avg Possession' : 'Ort. Topa Sahip Olma') : 'Avg Possession'}
+                </span>
                 <span className="font-display font-black text-xl text-zinc-100">{result.teamStats.avgPossession}%</span>
               </div>
               <div className="bg-zinc-900/20 border border-[#e8ff3b]/10 p-3 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Avg Pass Quality</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+                  {isMounted ? (language === 'en' ? 'Avg Pass Quality' : 'Ort. Pas İsabeti') : 'Avg Pass Quality'}
+                </span>
                 <span className="font-display font-black text-xl text-[#e8ff3b]">{result.teamStats.avgPassAccuracy}%</span>
               </div>
             </div>
@@ -322,7 +337,9 @@ export default function ResultPhase({
 
               {/* Bio and tournament specs */}
               <div className="flex-1 mt-0.5">
-                <h3 className="font-display font-bold text-sm uppercase tracking-widest text-[#e8ff3b] leading-tight mb-0.5">Tournament Golden MVP</h3>
+                <h3 className="font-display font-bold text-sm uppercase tracking-widest text-[#e8ff3b] leading-tight mb-0.5">
+                  {isMounted ? t('result_mvp') : 'Tournament Golden MVP'}
+                </h3>
                 <h2 className="font-display font-black text-xl text-white leading-tight mb-2">
                   {result.mvp.name}
                 </h2>
@@ -335,21 +352,27 @@ export default function ResultPhase({
                 {/* Seasonal aggregate columns */}
                 <div className="flex gap-4 mt-4 text-xs font-mono">
                   <div>
-                    <span className="text-[9px] text-zinc-600 block">GOALS</span>
+                    <span className="text-[9px] text-zinc-600 block">
+                      {isMounted ? (language === 'en' ? 'GOALS' : 'GOLLER') : 'GOALS'}
+                    </span>
                     <strong className="text-[#e8ff3b] font-bold text-sm">
                       {result.playerSeasonStats.find(s => s.playerId === result.mvp.id)?.goals || 0}
                     </strong>
                   </div>
                   <div className="h-6 w-px bg-zinc-850 mt-1" />
                   <div>
-                    <span className="text-[9px] text-zinc-600 block">ASSISTS</span>
+                    <span className="text-[9px] text-zinc-650 block">
+                      {isMounted ? (language === 'en' ? 'ASSISTS' : 'ASİSTLER') : 'ASSISTS'}
+                    </span>
                     <strong className="text-white font-bold text-sm">
                       {result.playerSeasonStats.find(s => s.playerId === result.mvp.id)?.assists || 0}
                     </strong>
                   </div>
                   <div className="h-6 w-px bg-zinc-850 mt-1" />
                   <div>
-                    <span className="text-[9px] text-zinc-600 block">AVG RATING</span>
+                    <span className="text-[9px] text-zinc-650 block">
+                      {isMounted ? t('build_rating') : 'AVG RATING'}
+                    </span>
                     <strong className="text-white font-bold text-sm">
                       {result.playerSeasonStats.find(s => s.playerId === result.mvp.id)?.avgRating || 6.0}
                     </strong>
@@ -364,9 +387,11 @@ export default function ResultPhase({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
               <div>
                 <h3 className="font-display font-bold text-xs sm:text-sm uppercase text-zinc-200 tracking-wider">
-                  Squad Tournament Metrics
+                  {isMounted ? (language === 'en' ? 'Squad Tournament Metrics' : 'Takım Turnuva İstatistikleri') : 'Squad Tournament Metrics'}
                 </h3>
-                <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">click info button for bio logs</p>
+                <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">
+                  {isMounted ? (language === 'en' ? 'click info button for bio logs' : 'biyografi kayıtları için bilgi butonuna tıklayın') : 'click info button for bio logs'}
+                </p>
               </div>
 
               {/* Sorting triggers row */}
@@ -381,7 +406,7 @@ export default function ResultPhase({
                         isActive ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-400 hover:text-zinc-200'
                       }`}
                     >
-                      {opt === 'rating' ? 'Rating' : opt === 'goals' ? 'G' : opt === 'assists' ? 'A' : opt}
+                      {opt === 'rating' ? (isMounted ? (language === 'en' ? 'Rating' : 'GEN') : 'Rating') : opt === 'goals' ? 'G' : opt === 'assists' ? 'A' : opt}
                     </button>
                   );
                 })}
@@ -463,19 +488,23 @@ export default function ResultPhase({
         {/* History Quick-Chips strip */}
         <div className="space-y-2 flex-1">
           <div className="flex items-center justify-between max-w-sm">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">History Log ({historyStats.totalGames} played)</span>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+              {isMounted ? (language === 'en' ? `History Log (${historyStats.totalGames} played)` : `Geçmiş Kayıtları (${historyStats.totalGames} oynandı)`) : `History Log (${historyStats.totalGames} played)`}
+            </span>
             {historyStats.totalGames > 0 && (
               <span className="font-mono text-[9px] px-2 py-0.5 bg-zinc-900/60 border border-zinc-800 rounded-full text-zinc-400">
-                Win Rate: <strong className="text-[#e8ff3b] font-bold">{historyStats.winsCount}/{historyStats.totalGames} ({historyStats.rate}%)</strong>
+                {isMounted ? t('history_win_rate') : 'Win Rate'}: <strong className="text-[#e8ff3b] font-bold">{historyStats.winsCount}/{historyStats.totalGames} ({historyStats.rate}%)</strong>
               </span>
             )}
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
             {lastThreeChips.length === 0 ? (
-              <span className="text-zinc-600 font-mono text-[10px]">No historic runs recorded yet.</span>
+              <span className="text-zinc-650 font-mono text-[10px]">
+                {isMounted ? (language === 'en' ? 'No historic runs recorded yet.' : 'Henüz kaydedilmiş geçmiş maç bulunmuyor.') : 'No historic runs recorded yet.'}
+              </span>
             ) : (
-              lastThreeChips.map((h, i) => {
+              lastThreeChips.map((h) => {
                 return (
                   <div 
                     key={h.id}
@@ -507,7 +536,7 @@ export default function ResultPhase({
                 onClick={onNavigateHistory}
                 className="text-[10px] font-mono text-zinc-500 hover:text-[#e8ff3b] flex items-center gap-0.5 hover:underline pl-1"
               >
-                <span>View All History</span>
+                <span>{isMounted ? (language === 'en' ? 'View All History' : 'Tüm Geçmişi Görüntüle') : 'View All History'}</span>
                 <ChevronRight className="w-3 h-3" />
               </button>
             )}
@@ -521,7 +550,7 @@ export default function ResultPhase({
             onClick={onTrySameTeam}
             className="flex-1 md:flex-none py-3 px-5 border border-zinc-900 hover:border-zinc-800 bg-zinc-950 text-zinc-300 hover:text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all"
           >
-            Try same team (rebuild)
+            {isMounted ? t('result_btn_try_same') : 'Try Same Team'}
           </button>
 
           <button
@@ -529,7 +558,7 @@ export default function ResultPhase({
             onClick={onPlayAgain}
             className="flex-1 md:flex-none py-3 px-6 bg-[#e8ff3b] text-black hover:bg-[#d6ec2b] hover:shadow-[0_0_20px_rgba(232,255,59,0.25)] rounded-xl text-xs font-display font-black uppercase tracking-wider transition-all"
           >
-            Play again (reroll)
+            {isMounted ? t('result_btn_play_again') : 'Play Again'}
           </button>
         </div>
 

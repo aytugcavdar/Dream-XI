@@ -5,6 +5,7 @@ import { Player } from '@/types';
 import { editions } from '@/data/editions';
 import { X, Award, Shield, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLanguage } from '@/components/LanguageProvider';
 
 interface PlayerModalProps {
   player: Player | null;
@@ -12,6 +13,9 @@ interface PlayerModalProps {
 }
 
 export default function PlayerModal({ player, onClose }: PlayerModalProps) {
+  const { t, language, isMounted } = useLanguage();
+  const isTr = language === 'tr';
+
   useEffect(() => {
     if (!player) return;
 
@@ -35,7 +39,7 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
   // Find host countries for the years the player participated in
   const getHostCountry = (year: number) => {
     const edit = editions.find(e => e.year === year);
-    return edit ? edit.host : 'Host Country';
+    return edit ? edit.host : (isTr ? 'Ev Sahibi Ülke' : 'Host Country');
   };
 
   const isLegendary = player.rating >= 93 || player.legendary === true;
@@ -143,7 +147,7 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
                   </span>
                   {isLegendary && (
                     <span className="flex items-center gap-1 bg-[#e8ff3b]/10 text-[#e8ff3b] border border-[#e8ff3b]/20 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                      <Award className="w-3 h-3" /> Legendary
+                      <Award className="w-3 h-3" /> {isMounted ? t('modal_legendary') : 'Legendary'}
                     </span>
                   )}
                 </div>
@@ -160,19 +164,19 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
             {/* World Cup Career Campaign Stats */}
             <div className="mb-5">
               <h3 className="font-display font-semibold text-xs tracking-wider uppercase text-zinc-400 mb-3 flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-[#e8ff3b]" /> In this World Cup (Career Averages)
+                <Shield className="w-4 h-4 text-[#e8ff3b]" /> {isMounted ? t('modal_wc_stats') : 'In this World Cup (Career Averages)'}
               </h3>
               <div className="grid grid-cols-5 gap-2 text-center">
                 <div className="bg-zinc-900 border border-zinc-800/60 p-2 rounded-lg">
-                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">GP</div>
+                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">{isMounted ? t('modal_gp') : 'GP'}</div>
                   <div className="font-display font-bold text-lg text-zinc-100">{player.wcStats.matches}</div>
                 </div>
                 <div className="bg-zinc-900 border border-zinc-800/60 p-2 rounded-lg">
-                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">G</div>
+                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">{isMounted ? t('modal_g') : 'G'}</div>
                   <div className="font-display font-bold text-lg text-[#e8ff3b]">{player.wcStats.goals}</div>
                 </div>
                 <div className="bg-zinc-900 border border-zinc-800/60 p-2 rounded-lg">
-                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">A</div>
+                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">{isMounted ? t('modal_a') : 'A'}</div>
                   <div className="font-display font-bold text-lg text-zinc-100">{player.wcStats.assists}</div>
                 </div>
                 <div className="bg-zinc-900 border border-zinc-800/60 p-2 rounded-lg">
@@ -180,7 +184,7 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
                   <div className="font-display font-bold text-lg text-zinc-100">{player.wcStats.xG}</div>
                 </div>
                 <div className="bg-zinc-900 border border-[#e8ff3b]/10 p-2 rounded-lg">
-                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">PASS%</div>
+                  <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-0.5">{isMounted ? t('modal_pass') : 'PASS%'}</div>
                   <div className="font-display font-bold text-lg text-zinc-100">{player.wcStats.passAccuracy}%</div>
                 </div>
               </div>
@@ -189,7 +193,7 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
             {/* Career Tournaments List */}
             <div className="mb-1">
               <h3 className="font-display font-semibold text-xs tracking-wider uppercase text-zinc-400 mb-2">
-                Tournament Appearances
+                {isMounted ? t('modal_appearances') : 'Tournament Appearances'}
               </h3>
               <div className="flex flex-wrap gap-2 text-xs font-mono">
                 {player.worldCups.map((year) => {
@@ -198,7 +202,7 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
                     <span 
                       key={year} 
                       className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg text-zinc-300 transition-colors"
-                      title={`World Cup ${year} - Hosted by ${host}`}
+                      title={isMounted ? (isTr ? `${year} Dünya Kupası - Ev Sahibi: ${host}` : `World Cup ${year} - Hosted by ${host}`) : `World Cup ${year} - Hosted by ${host}`}
                     >
                       <span>{getHostFlag(host)}</span>
                       <strong className="text-zinc-100 font-bold">{year}</strong>
@@ -214,7 +218,25 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
               <div className="mt-4 p-2.5 bg-red-950/20 border border-red-950/50 rounded-lg flex items-center gap-2 text-xs text-red-300 font-mono">
                 <Flame className="w-4 h-4 text-red-400 animate-pulse" />
                 <span>
-                  <strong>Golden Boot Highlight:</strong> Scored {player.wcStats.goals} historic goals overall, placing them in elite shooting categories!
+                  {isMounted 
+                    ? (() => {
+                        const raw = t('modal_golden_boot');
+                        if (raw.includes(':')) {
+                          const [title, rest] = raw.split(':');
+                          return (
+                            <>
+                              <strong>{title}:</strong>{rest.replace('{goals}', String(player.wcStats.goals))}
+                            </>
+                          );
+                        }
+                        return raw.replace('{goals}', String(player.wcStats.goals));
+                      })()
+                    : (
+                      <>
+                        <strong>Golden Boot Highlight:</strong> Scored {player.wcStats.goals} historic goals overall, placing them in elite shooting categories!
+                      </>
+                    )
+                  }
                 </span>
               </div>
             )}
@@ -226,7 +248,7 @@ export default function PlayerModal({ player, onClose }: PlayerModalProps) {
               onClick={onClose}
               className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 text-white rounded-lg text-xs font-mono tracking-wider uppercase transition-colors"
             >
-              Close Record
+              {isMounted ? t('modal_btn_close') : 'Close Record'}
             </button>
           </div>
         </motion.div>

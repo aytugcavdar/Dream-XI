@@ -59,26 +59,32 @@ export const restLegends: Player[] = [
 
 export const restRealPlayers: Record<string, Array<{ name: string; position: 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' | 'RW' | 'CF' | 'ST'; gp: 'GK' | 'DEF' | 'MID' | 'ATT'; rating: number; years?: number[]; bio?: string }>> = {
   turkey: [
-    { name: 'Rüştü Reçber', position: 'GK', gp: 'GK', rating: 88, years: [1996, 2002, 2008], bio: 'Heroic goalkeeper of Turkey\'s legendary 2002 World Cup campaign.' },
-    { name: 'Hakan Şükür', position: 'ST', gp: 'ATT', rating: 89, years: [1996, 2002], bio: 'Turkey\'s greatest striker, scored the fastest goal in World Cup history in 2002.' },
+    { name: 'Rüştü Reçber', position: 'GK', gp: 'GK', rating: 88, years: [2002], bio: 'Heroic goalkeeper of Turkey\'s legendary 2002 World Cup campaign.' },
+    { name: 'Hakan Şükür', position: 'ST', gp: 'ATT', rating: 89, years: [2002], bio: 'Turkey\'s greatest striker, scored the fastest goal in World Cup history in 2002.' },
     { name: 'İlhan Mansız', position: 'ST', gp: 'ATT', rating: 86, years: [2002], bio: 'Incredibly skilled forward who scored the golden goal against Senegal in 2002.' },
-    { name: 'Nihat Kahveci', position: 'ST', gp: 'ATT', rating: 87, years: [2002, 2008], bio: 'A highly clinical forward with incredible shooting and free-kick accuracy.' },
-    { name: 'Hakan Çalhanoğlu', position: 'CAM', gp: 'MID', rating: 88, years: [2016, 2020, 2024], bio: 'Master playmaker and free-kick specialist of modern Turkish football.' },
-    { name: 'Arda Güler', position: 'CAM', gp: 'MID', rating: 85, years: [2024], bio: 'A prodigiously talented young midfielder carrying the future of Turkish football.' },
-    { name: 'Emre Belözoğlu', position: 'CM', gp: 'MID', rating: 86, years: [2002, 2008, 2012, 2016], bio: 'A passionate, highly technical midfield general of the 2002 bronze squad.' },
-    { name: 'Tugay Kerimoğlu', position: 'CM', gp: 'MID', rating: 87, years: [1996, 2002, 2006], bio: 'Highly respected deep-lying playmaker, a legend in the Premier League and Turkey.' },
-    { name: 'Alpay Özalan', position: 'CB', gp: 'DEF', rating: 85, years: [1996, 2002], bio: 'Iron-built, uncompromising central defender in the 2002 FIFA World Cup All-Star Team.' },
-    { name: 'Bülent Korkmaz', position: 'CB', gp: 'DEF', rating: 86, years: [1996, 2002], bio: 'Known as "The Warrior," an iconic captain who led with ultimate courage.' },
+    { name: 'Nihat Kahveci', position: 'ST', gp: 'ATT', rating: 87, years: [2002], bio: 'A highly clinical forward with incredible shooting and free-kick accuracy.' },
+    { name: 'Emre Belözoğlu', position: 'CM', gp: 'MID', rating: 86, years: [2002], bio: 'A passionate, highly technical midfield general of the 2002 bronze squad.' },
+    { name: 'Tugay Kerimoğlu', position: 'CM', gp: 'MID', rating: 87, years: [2002], bio: 'Highly respected deep-lying playmaker, a legend in the Premier League and Turkey.' },
+    { name: 'Alpay Özalan', position: 'CB', gp: 'DEF', rating: 85, years: [2002], bio: 'Iron-built, uncompromising central defender in the 2002 FIFA World Cup All-Star Team.' },
+    { name: 'Bülent Korkmaz', position: 'CB', gp: 'DEF', rating: 86, years: [2002], bio: 'Known as "The Warrior," an iconic captain who led with ultimate courage.' },
     { name: 'Ümit Davala', position: 'RB', gp: 'DEF', rating: 84, years: [2002], bio: 'Versatile right wing-back who scored key goals against Japan and Senegal in 2002.' },
     { name: 'Hasan Şaş', position: 'RW', gp: 'ATT', rating: 86, years: [2002], bio: 'Highly skillful winger who dominated defenses in 2002 and earned All-Star honors.' },
-    { name: 'Arda Turan', position: 'LW', gp: 'ATT', rating: 86, years: [2008, 2016], bio: 'Skillful winger with exceptional close control and playmaker abilities.' },
-    { name: 'Hamit Altıntop', position: 'CM', gp: 'MID', rating: 85, years: [2008, 2012], bio: 'Powerful midfielder known for long-range scoring and versatile defensive help.' },
     { name: 'Yıldıray Baştürk', position: 'CAM', gp: 'MID', rating: 85, years: [2002], bio: 'Creative, elusive attacking midfielder who orchestrated Turkey\'s 2002 attacks.' },
-    { name: 'Hakan Balta', position: 'LB', gp: 'DEF', rating: 82, years: [2008, 2016], bio: 'Reliable left-back with excellent tactical positioning.' },
-    { name: 'Çağlar Söyüncü', position: 'CB', gp: 'DEF', rating: 83, years: [2020, 2024], bio: 'High-physicality central defender of the modern generation.' },
-    { name: 'Merih Demiral', position: 'CB', gp: 'DEF', rating: 84, years: [2020, 2024], bio: 'Passionate and aggressive modern defender with exceptional aerial presence.' },
-    { name: 'Burak Yılmaz', position: 'ST', gp: 'ATT', rating: 84, years: [2012, 2016, 2020], bio: 'Prolific goalscorer and legendary striker of the 2010s era.' },
-    { name: 'Volkan Demirel', position: 'GK', gp: 'GK', rating: 84, years: [2008, 2012, 2014], bio: 'Fierce, commanding goalkeeper who anchored the national team for a decade.' }
+    
+    // 2002 Additions
+    { name: 'Fatih Akyel', position: 'RB', gp: 'DEF', rating: 83, years: [2002], bio: 'Right-back who provided solid defense and crossed the ball for İlhan Mansız\'s golden goal.' },
+    { name: 'Hakan Ünsal', position: 'LB', gp: 'DEF', rating: 82, years: [2002], bio: 'Energetic left-back of the 2002 campaign, known for his attacking overlapping runs.' },
+    { name: 'Emre Aşık', position: 'CB', gp: 'DEF', rating: 82, years: [2002], bio: 'Tough-tackling center-back who stepped up in crucial matches during the 2002 World Cup.' },
+    { name: 'Ergün Penbe', position: 'LB', gp: 'DEF', rating: 83, years: [2002], bio: 'Calm and versatile defender/midfielder, a reliable presence in Turkey\'s 2002 run.' },
+    { name: 'Okan Buruk', position: 'RW', gp: 'ATT', rating: 84, years: [2002], bio: 'Tenacious, energetic winger/midfielder who provided high work-rate and steel.' },
+    { name: 'Tayfur Havutçu', position: 'CDM', gp: 'MID', rating: 82, years: [2002], bio: 'Experienced defensive midfielder who helped secure leads in the late stages of matches.' },
+    { name: 'Muzzy Izzet', position: 'CAM', gp: 'MID', rating: 82, years: [2002], bio: 'Creative Premier League midfielder who represented Turkey in their historic campaign.' },
+    { name: 'Arif Erdem', position: 'CF', gp: 'ATT', rating: 83, years: [2002], bio: 'Clever forward who provided key depth and attacking options in 2002.' },
+    { name: 'Ömer Çatkıç', position: 'GK', gp: 'GK', rating: 81, years: [2002], bio: 'Backup goalkeeper who stepped in and performed reliably during the 2002 World Cup.' },
+    { name: 'Zafer Özgültekin', position: 'GK', gp: 'GK', rating: 80, years: [2002], bio: 'Third-choice goalkeeper who was a vital part of the squad chemistry in 2002.' },
+    
+    // Additional verified 2002 depth
+    { name: 'Gökdeniz Karadeniz', position: 'RW', gp: 'ATT', rating: 83, years: [2002], bio: 'Pacy and clinical winger who provided key depth during Turkey\'s historic 2002 run.' }
   ],
   belgium: [
     { name: 'Thibaut Courtois', position: 'GK', gp: 'GK', rating: 92, years: [2014, 2018, 2022], bio: 'One of the greatest modern goalkeepers, won Golden Glove at 2018 World Cup.' },
@@ -98,16 +104,23 @@ export const restRealPlayers: Record<string, Array<{ name: string; position: 'GK
     { name: 'Enzo Scifo', position: 'CAM', gp: 'MID', rating: 88, years: [1986, 1990, 1994, 1998], bio: 'Creative genius of Belgium\'s legendary 1986 semifinal squad.' }
   ],
   senegal: [
-    { name: 'Sadio Mané', position: 'LW', gp: 'ATT', rating: 91, years: [2018, 2022], bio: 'African Player of the Year, led Senegal to AFCON glory and 2018/2022 World Cups.' },
+    { name: 'Sadio Mané', position: 'LW', gp: 'ATT', rating: 91, years: [2018], bio: 'African Player of the Year and Senegal\'s attacking leader at the 2018 World Cup.' },
     { name: 'Kalidou Koulibaly', position: 'CB', gp: 'DEF', rating: 89, years: [2018, 2022], bio: 'One of Africa\'s greatest ever defenders, an absolute rock and captain.' },
     { name: 'Idrissa Gueye', position: 'CDM', gp: 'MID', rating: 84, years: [2018, 2022], bio: 'Tireless defensive midfielder, breaking up attacks with infinite stamina.' },
-    { name: 'Edouard Mendy', position: 'GK', gp: 'GK', rating: 86, years: [2018, 2022], bio: 'Commanding goalkeeper who won the Best FIFA Goalkeeper award in 2021.' },
-    { name: 'El Hadji Diouf', position: 'ST', gp: 'ATT', rating: 86, years: [2002, 2006], bio: 'Sensational forward in the historic 2002 World Cup squad who terrorized defenses.' },
+    { name: 'Edouard Mendy', position: 'GK', gp: 'GK', rating: 86, years: [2022], bio: 'Commanding goalkeeper who won the Best FIFA Goalkeeper award in 2021.' },
+    { name: 'El Hadji Diouf', position: 'ST', gp: 'ATT', rating: 86, years: [2002], bio: 'Sensational forward in the historic 2002 World Cup squad who terrorized defenses.' },
     { name: 'Papa Bouba Diop', position: 'CM', gp: 'MID', rating: 84, years: [2002], bio: 'Scored the legendary winning goal against France in the opening game of 2002.' },
     { name: 'Ismaïla Sarr', position: 'RW', gp: 'ATT', rating: 83, years: [2018, 2022], bio: 'High-speed modern winger with outstanding direct running and crossing.' },
     { name: 'Boulaye Dia', position: 'ST', gp: 'ATT', rating: 82, years: [2022], bio: 'Dynamic, hard-working modern forward who scored in the 2022 World Cup.' },
     { name: 'Cheikhou Kouyaté', position: 'CDM', gp: 'MID', rating: 82, years: [2018, 2022], bio: 'Versatile defensive midfielder/centerback of Senegal\'s golden eras.' },
-    { name: 'Henri Camara', position: 'ST', gp: 'ATT', rating: 84, years: [2002], bio: 'Scored two goals including the Golden Goal against Sweden to reach 2002 QF.' }
+    { name: 'Henri Camara', position: 'ST', gp: 'ATT', rating: 84, years: [2002], bio: 'Scored two goals including the Golden Goal against Sweden to reach 2002 QF.' },
+    { name: 'Aliou Cissé', position: 'CDM', gp: 'MID', rating: 83, years: [2002], bio: 'Captain and defensive midfield anchor of the historic 2002 quarter-finalists, now their coach.' },
+    { name: 'Tony Sylva', position: 'GK', gp: 'GK', rating: 84, years: [2002], bio: 'Outstanding shot-stopper who kept clean sheets and led Senegal to the 2002 QF.' },
+    { name: 'Lamine Diatta', position: 'CB', gp: 'DEF', rating: 82, years: [2002], bio: 'Reliable and physical central defender of the legendary 2002 World Cup campaign.' },
+    { name: 'Ferdinand Coly', position: 'RB', gp: 'DEF', rating: 82, years: [2002], bio: 'Tough-tackling, energetic right-back who was a core starter in 2002.' },
+    { name: 'Khalilou Fadiga', position: 'CAM', gp: 'MID', rating: 85, years: [2002], bio: 'Skillful, creative playmaker with a magic left foot who orchestrated the 2002 attacks.' },
+    { name: 'Salif Diao', position: 'CDM', gp: 'MID', rating: 83, years: [2002], bio: 'Physical defensive midfielder who scored a memorable team goal against Denmark in 2002.' },
+    { name: 'Habib Beye', position: 'RB', gp: 'DEF', rating: 81, years: [2002], bio: 'Versatile defender who provided excellent squad depth during the 2002 campaign.' }
   ],
   cameroon: [
     { name: 'Samuel Eto\'o', position: 'ST', gp: 'ATT', rating: 93, years: [1998, 2002, 2010, 2014], bio: 'Four-time African Player of the Year and one of the finest strikers in football history.' },
@@ -150,12 +163,19 @@ export const restRealPlayers: Record<string, Array<{ name: string; position: 'GK
     { name: 'Lee Kang-in', position: 'CAM', gp: 'MID', rating: 84, years: [2022], bio: 'Superbly gifted playmaker with a magic left foot and creative vision.' },
     { name: 'Ahn Jung-hwan', position: 'ST', gp: 'ATT', rating: 84, years: [2002, 2006], bio: 'Scored the unforgettable golden goal header against Italy in the 2002 World Cup.' },
     { name: 'Hong Myung-bo', position: 'CB', gp: 'DEF', rating: 87, years: [1990, 1994, 1998, 2002], bio: 'Captain of 2002 team, won Bronze Ball in 2002, one of Asia\'s greatest sweeper-defenders.' },
-    { name: 'Lee Young-pyo', position: 'LB', gp: 'DEF', rating: 83, years: [2002, 2006, 2010], bio: 'Elusive fullback with amazing step-overs who starred in the 2002 campaign.' }
+    { name: 'Lee Young-pyo', position: 'LB', gp: 'DEF', rating: 83, years: [2002, 2006, 2010], bio: 'Elusive fullback with amazing step-overs who starred in the 2002 campaign.' },
+    { name: 'Seol Ki-hyeon', position: 'RW', gp: 'ATT', rating: 83, years: [2002, 2006], bio: 'Physical winger who scored the dramatic late equalizer against Italy in the 2002 Round of 16.' },
+    { name: 'Lee Woon-jae', position: 'GK', gp: 'GK', rating: 85, years: [2002, 2006, 2010], bio: 'Legendary goalkeeper who saved Joaquin\'s penalty in the 2002 QF shootout against Spain.' },
+    { name: 'Kim Nam-il', position: 'CDM', gp: 'MID', rating: 84, years: [2002, 2006], bio: '"The Vacuum Cleaner," a combative defensive midfielder who broke up attacks in 2002.' },
+    { name: 'Song Chong-gug', position: 'RB', gp: 'DEF', rating: 83, years: [2002, 2006], bio: 'Right-back who famously marked Luis Figo out of the game in South Korea\'s 2002 win over Portugal.' },
+    { name: 'Yoo Sang-chul', position: 'CM', gp: 'MID', rating: 85, years: [1998, 2002], bio: 'Versatile midfield powerhouse who scored against Poland in 2002, named in the 2002 All-Star team.' },
+    { name: 'Hwang Sun-hong', position: 'ST', gp: 'ATT', rating: 84, years: [1990, 1994, 2002], bio: 'Experienced striker who scored the opening goal of South Korea\'s legendary 2002 campaign.' },
+    { name: 'Cha Du-ri', position: 'RB', gp: 'DEF', rating: 81, years: [2002, 2010], bio: 'Blazing fast wing-back known for his incredible physical stamina and direct runs.' },
+    { name: 'Choi Jin-cheul', position: 'CB', gp: 'DEF', rating: 82, years: [2002, 2006], bio: 'Reliable, rugged center-back who anchored the three-man defense in 2002.' }
   ],
   nigeria: [
     { name: 'Jay-Jay Okocha', position: 'CAM', gp: 'MID', rating: 90, years: [1994, 1998, 2002], bio: 'So good they named him twice. An absolute entertainer with unbelievable dribbling flair.' },
     { name: 'Nwankwo Kanu', position: 'ST', gp: 'ATT', rating: 88, years: [1998, 2002, 2010], bio: 'Tall, mercurial forward who won Champions League and Olympic Gold with Nigeria.' },
-    { name: 'Victor Osimhen', position: 'ST', gp: 'ATT', rating: 89, years: [2018, 2022], bio: 'Relentless, elite African striker who dominated Serie A and spearheads the modern Super Eagles.' },
     { name: 'Vincent Enyeama', position: 'GK', gp: 'GK', rating: 86, years: [2002, 2010, 2014], bio: 'Unmatched reflexes, kept Lionel Messi at bay with heroic saves in 2010.' },
     { name: 'John Obi Mikel', position: 'CDM', gp: 'MID', rating: 85, years: [2010, 2014, 2018], bio: 'Composed midfield general who anchored Chelsea and Nigeria for over a decade.' },
     { name: 'Taribo West', position: 'CB', gp: 'DEF', rating: 84, years: [1998, 2002], bio: 'Famous for his colorful hairstyles and extremely aggressive defensive style.' },
@@ -184,8 +204,7 @@ export const restRealPlayers: Record<string, Array<{ name: string; position: 'GK
   colombia: [
     { name: 'Carlos Valderrama', position: 'CAM', gp: 'MID', rating: 86, years: [1990, 1994, 1998], bio: '"El Pibe," iconic blonde afro captain, renowned for his laser first-touch playmaking.' },
     { name: 'James Rodríguez', position: 'CAM', gp: 'MID', rating: 88, years: [2014, 2018], bio: 'Golden Boot winner of 2014 World Cup, scored THAT unbelievable chest-volley.' },
-    { name: 'Radamel Falcao', position: 'ST', gp: 'ATT', rating: 88, years: [2014, 2018], bio: '"El Tigre," an aerial beast and clinical predatory strike force.' },
-    { name: 'Luis Díaz', position: 'LW', gp: 'ATT', rating: 84, years: [2022], bio: 'Electric modern winger with extreme acceleration and dribbling qualities.' },
+    { name: 'Radamel Falcao', position: 'ST', gp: 'ATT', rating: 88, years: [2018], bio: '"El Tigre," an aerial beast and clinical predatory strike force.' },
     { name: 'David Ospina', position: 'GK', gp: 'GK', rating: 82, years: [2014, 2018], bio: 'Unyielding goalkeeper, savior of the Colombian goal for over a decade.' }
   ],
   chile: [
@@ -214,12 +233,22 @@ export const restRealPlayers: Record<string, Array<{ name: string; position: 'GK
   croatia: [
     { name: 'Ivan Rakitić', position: 'CM', gp: 'MID', rating: 88, years: [2014, 2018], bio: 'Formed a legendary midfield partnership with Modrić, scoring final penalties in 2018.' },
     { name: 'Mario Mandžukić', position: 'ST', gp: 'ATT', rating: 87, years: [2014, 2018], bio: 'Ruthless striker who scored the final winner against England in the 2018 semi-final.' },
-    { name: 'Ivan Perişić', position: 'LW', gp: 'ATT', rating: 86, years: [2014, 2018, 2022], bio: 'Croatia\'s ultimate tournament player, scoring and assisting in vital moments.' },
+    { name: 'Ivan Perišić', position: 'LW', gp: 'ATT', rating: 86, years: [2014, 2018, 2022], bio: 'Croatia\'s ultimate tournament player, scoring and assisting in vital moments.' },
     { name: 'Mateo Kovačić', position: 'CM', gp: 'MID', rating: 85, years: [2014, 2018, 2022], bio: 'Silky dribbler in midfield, driving the ball under high pressure.' },
     { name: 'Marcelo Brozović', position: 'CDM', gp: 'MID', rating: 85, years: [2014, 2018, 2022], bio: 'Unbelievable stamina engine, covering more ground than any player in 2018/2022.' },
     { name: 'Joško Gvardiol', position: 'CB', gp: 'DEF', rating: 86, years: [2022], bio: 'The masked sensation of 2022, displaying elite defensive skills as a youngster.' },
     { name: 'Zvonimir Boban', position: 'CM', gp: 'MID', rating: 87, years: [1998], bio: 'The captain of the 1998 bronze-winning generation, clean and elegant.' },
-    { name: 'Robert Prosinečki', position: 'CAM', gp: 'MID', rating: 87, years: [1990, 1998], bio: 'Exquisite dribbler, the only player to score for two different nations in WC history.' }
+    { name: 'Robert Prosinečki', position: 'CAM', gp: 'MID', rating: 87, years: [1998], bio: 'Exquisite dribbler, the only player to score for two different nations in WC history.' },
+    { name: 'Danijel Subašić', position: 'GK', gp: 'GK', rating: 85, years: [2014, 2018], bio: 'Heroic goalkeeper who saved three penalties in the 2018 World Cup shootout against Denmark.' },
+    { name: 'Domagoj Vida', position: 'CB', gp: 'DEF', rating: 84, years: [2014, 2018, 2022], bio: 'Aggressive, high-spirited central defender who scored a crucial header in the 2018 QF.' },
+    { name: 'Dejan Lovren', position: 'CB', gp: 'DEF', rating: 85, years: [2014, 2018, 2022], bio: 'Physical, experienced defender who started in the 2018 World Cup Final.' },
+    { name: 'Šime Vrsaljko', position: 'RB', gp: 'DEF', rating: 83, years: [2014, 2018], bio: 'Tireless right-back who provided solid defensive cover and crosses during the 2018 campaign.' },
+    { name: 'Ante Rebić', position: 'RW', gp: 'ATT', rating: 83, years: [2014, 2018], bio: 'Powerful, direct winger who scored a spectacular volley against Argentina in 2018.' },
+    { name: 'Andrej Kramarić', position: 'ST', gp: 'ATT', rating: 84, years: [2018, 2022], bio: 'Intelligent, highly clinical forward who scored key goals in 2018 and 2022 runs.' },
+    { name: 'Robert Jarni', position: 'LB', gp: 'DEF', rating: 86, years: [1998, 2002], bio: 'Lightning-fast left-back who scored a memorable long-range opener against Germany in 1998.' },
+    { name: 'Dražen Ladić', position: 'GK', gp: 'GK', rating: 85, years: [1998], bio: 'Commanding goalkeeper of the 1998 bronze generation, pulling off world-class saves.' },
+    { name: 'Mario Stanić', position: 'RW', gp: 'ATT', rating: 83, years: [1998, 2002], bio: 'Versatile winger who scored Croatia\'s first ever World Cup goal in 1998.' },
+    { name: 'Igor Štimac', position: 'CB', gp: 'DEF', rating: 83, years: [1998], bio: 'Uncompromising, tough center-back who anchored the legendary 1998 defense.' }
   ],
   uruguay: [
     { name: 'Edinson Cavani', position: 'ST', gp: 'ATT', rating: 89, years: [2010, 2014, 2018, 2022], bio: '"El Matador," tireless defensive striker who scored a magnificent brace in 2018.' },

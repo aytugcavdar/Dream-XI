@@ -245,6 +245,13 @@ export interface ChemistryBreakdown {
   countryCore: { team: NationalTeam; count: number } | null;
   eraCore: { year: string; count: number } | null;
   activePartnerships: Array<{ name: string; desc: string }>;
+  details?: {
+    positionBonus: number;
+    countryLinkBonus: number;
+    eraLinkBonus: number;
+    basePoints: number;
+    partnershipBonus: number;
+  };
 }
 
 /** Valid sort keys for the ResultPhase squad table. */

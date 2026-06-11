@@ -442,20 +442,71 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
         : `🏁 FT Scoreline matches the final model calculations: ${activeMatch.teamGoals} - ${activeMatch.opponentGoals}.`
     ];
 
-    if (activeMatch.won) {
-      finalLogs.push(
-        isMounted 
-          ? t('sim_win_log').replace('{flag}', team.flag).replace('{team}', team.name)
-          : `🎉 WIN! ${team.flag} ${team.name} passes to the next round with complete composure.`
-      );
+    const isGroupStage = activeMatch.round.includes('Group Match');
+    const isDraw = activeMatch.teamGoals === activeMatch.opponentGoals;
+
+    if (isGroupStage) {
+      if (isDraw) {
+        finalLogs.push(
+          isMounted 
+            ? (language === 'en' ? `🤝 DRAW! Both teams share the points after a hard-fought battle.` : `🤝 BERABERLİK! Zorlu bir mücadelenin ardından her iki takım da puanları paylaşıyor.`)
+            : `🤝 DRAW! Both teams share the points after a hard-fought battle.`
+        );
+      } else if (activeMatch.won) {
+        finalLogs.push(
+          isMounted 
+            ? t('sim_win_log').replace('{flag}', team.flag).replace('{team}', team.name)
+            : `🎉 WIN! ${team.flag} ${team.name} passes to the next round with complete composure.`
+        );
+      } else {
+        finalLogs.push(
+          isMounted 
+            ? (language === 'en' ? `💔 LOSS! The opposition takes the 3 points. We must rebuild momentum in the next fixture.` : `💔 MAĞLUBİYET! Rakip 3 puanı alıyor. Sonraki maçta ivme kazanmalıyız.`)
+            : `💔 LOSS! The opposition takes the 3 points. We must rebuild momentum in the next fixture.`
+        );
+      }
     } else {
-      finalLogs.push(
-        isMounted ? t('sim_loss_log') : `💔 LOSS! Elite tactical opposition managed to contain our squads.`
-      );
+      if (activeMatch.won) {
+        finalLogs.push(
+          isMounted 
+            ? t('sim_win_log').replace('{flag}', team.flag).replace('{team}', team.name)
+            : `🎉 WIN! ${team.flag} ${team.name} passes to the next round with complete composure.`
+        );
+      } else {
+        finalLogs.push(
+          isMounted ? t('sim_loss_log') : `💔 LOSS! Elite tactical opposition managed to contain our squads.`
+        );
+      }
     }
 
     setTickerEvents(prev => [...prev, ...finalLogs]);
-    setMatchStage(activeMatch.won ? 'POST_MATCH' : 'ELIMINATED');
+
+    const isGroupMatch3 = activeMatch.round.includes('Group Match 3');
+    const userQualified = result.exitRound !== 'Group Stage';
+
+    // Show group qualification summary after final group match
+    if (isGroupStage && isGroupMatch3 && result.groups?.[0]) {
+      const finalStandings = result.groups[0].standings;
+      const userStanding = finalStandings.find(s => s.teamId === team.id);
+      const userRank = finalStandings.findIndex(s => s.teamId === team.id) + 1;
+      if (userStanding) {
+        const gdSign = userStanding.goalDifference > 0 ? '+' : '';
+        const qualLog = userQualified
+          ? (isMounted && isTr
+              ? `📊 GRUP A TAMAMLANDI! ${team.flag} ${team.name} ${userStanding.points} puanla ${userRank}. sırada bitirdi — ÇEYREK FİNALLERE KALDINIZ! 🎉`
+              : `📊 GROUP A COMPLETE! ${team.flag} ${team.name} finished #${userRank} with ${userStanding.points} pts (GD: ${gdSign}${userStanding.goalDifference}) — QUALIFIED for Quarter-Finals! 🎉`)
+          : (isMounted && isTr
+              ? `📊 GRUP A TAMAMLANDI! ${team.flag} ${team.name} ${userStanding.points} puanla ${userRank}. sırada bitirdi — TURNUVADAN ELENDİNİZ 💔`
+              : `📊 GROUP A COMPLETE! ${team.flag} ${team.name} finished #${userRank} with ${userStanding.points} pts (GD: ${gdSign}${userStanding.goalDifference}) — ELIMINATED from tournament 💔`);
+        setTickerEvents(prev => [...prev, qualLog]);
+      }
+    }
+
+    const nextStage = isGroupStage 
+      ? (isGroupMatch3 ? (userQualified ? 'POST_MATCH' : 'ELIMINATED') : 'POST_MATCH')
+      : (activeMatch.won ? 'POST_MATCH' : 'ELIMINATED');
+
+    setMatchStage(nextStage);
   };
 
   // Live minute ticking engine
@@ -466,13 +517,58 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
       const matchEndMinute = activeEvents.some(event => event.minute > 90) ? 120 : 90;
 
       if (matchMinute >= matchEndMinute) {
-        setTickerEvents(prev => [
-          ...prev,
-          activeMatch.won
+        const isGroupStage = activeMatch.round.includes('Group Match');
+        const isDraw = activeMatch.teamGoals === activeMatch.opponentGoals;
+        
+        let endComment = '';
+        if (isGroupStage) {
+          if (isDraw) {
+            endComment = isMounted 
+              ? (language === 'en' ? `⏱️ FT: Hard-fought draw between ${team.name} and ${activeMatch.opponentName}.` : `⏱️ MS: ${team.name} ve ${activeMatch.opponentName} arasında zorlu beraberlik.`)
+              : `⏱️ FT: Hard-fought draw between ${team.name} and ${activeMatch.opponentName}.`;
+          } else if (activeMatch.won) {
+            endComment = isMounted
+              ? (language === 'en' ? `⏱️ FT: Full-time victory for ${team.name}!` : `⏱️ MS: ${team.name} için maç sonu galibiyeti!`)
+              : `⏱️ FT: Full-time victory for ${team.name}!`;
+          } else {
+            endComment = isMounted
+              ? (language === 'en' ? `⏱️ FT: Match ended in defeat for ${team.name}.` : `⏱️ MS: Maç ${team.name} için mağlubiyetle sonuçlandı.`)
+              : `⏱️ FT: Match ended in defeat for ${team.name}.`;
+          }
+        } else {
+          endComment = activeMatch.won
             ? `WIN: ${team.flag} ${team.name} advances from ${activeMatch.round}.`
-            : `LOSS: ${team.name} is eliminated by ${activeMatch.opponentName}.`,
-        ]);
-        setMatchStage(activeMatch.won ? 'POST_MATCH' : 'ELIMINATED');
+            : `LOSS: ${team.name} is eliminated by ${activeMatch.opponentName}.`;
+        }
+
+        setTickerEvents(prev => [...prev, endComment]);
+
+        const isGroupMatch3 = activeMatch.round.includes('Group Match 3');
+        const userQualified = result.exitRound !== 'Group Stage';
+
+        // Show group qualification summary after final group match
+        if (isGroupStage && isGroupMatch3 && result.groups?.[0]) {
+          const finalStandings = result.groups[0].standings;
+          const userStanding = finalStandings.find(s => s.teamId === team.id);
+          const userRank = finalStandings.findIndex(s => s.teamId === team.id) + 1;
+          if (userStanding) {
+            const gdSign = userStanding.goalDifference > 0 ? '+' : '';
+            const qualLog = userQualified
+              ? (isMounted && isTr
+                  ? `📊 GRUP A TAMAMLANDI! ${team.flag} ${team.name} ${userStanding.points} puanla ${userRank}. sırada bitirdi — ÇEYREK FİNALLERE KALDINIZ! 🎉`
+                  : `📊 GROUP A COMPLETE! ${team.flag} ${team.name} finished #${userRank} with ${userStanding.points} pts (GD: ${gdSign}${userStanding.goalDifference}) — QUALIFIED for Quarter-Finals! 🎉`)
+              : (isMounted && isTr
+                  ? `📊 GRUP A TAMAMLANDI! ${team.flag} ${team.name} ${userStanding.points} puanla ${userRank}. sırada bitirdi — TURNUVADAN ELENDİNİZ 💔`
+                  : `📊 GROUP A COMPLETE! ${team.flag} ${team.name} finished #${userRank} with ${userStanding.points} pts (GD: ${gdSign}${userStanding.goalDifference}) — ELIMINATED from tournament 💔`);
+            setTickerEvents(prev => [...prev, qualLog]);
+          }
+        }
+
+        const nextStage = isGroupStage 
+          ? (isGroupMatch3 ? (userQualified ? 'POST_MATCH' : 'ELIMINATED') : 'POST_MATCH')
+          : (activeMatch.won ? 'POST_MATCH' : 'ELIMINATED');
+
+        setMatchStage(nextStage);
         return;
       }
 
@@ -674,10 +770,14 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
 
             {/* Shootout penalty notification under standard clock */}
             {matchMinute >= 90 && activeMatch.teamGoals === activeMatch.opponentGoals && (
-              <span className="font-mono text-[8px] tracking-wider text-emerald-400 font-black uppercase mt-2 animate-pulse">
-                {activeMatch.won
-                  ? `(Won ${4 + Math.floor(activeMatch.opponentStrength % 2)}-${3 + Math.floor(activeMatch.opponentStrength % 2)} pens)`
-                  : `(Lost ${3 - Math.floor(activeMatch.opponentStrength % 2)}-${4 - Math.floor(activeMatch.opponentStrength % 2)} pens)`}
+              <span className={`font-mono text-[8px] tracking-wider font-black uppercase mt-2 ${
+                activeMatch.round.startsWith('Group') ? 'text-amber-400' : 'text-emerald-400 animate-pulse'
+              }`}>
+                {activeMatch.round.startsWith('Group')
+                  ? (isMounted && isTr ? '(BERABERLİK)' : '(DRAW)')
+                  : activeMatch.won
+                    ? `(Won ${4 + Math.floor(activeMatch.opponentStrength % 2)}-${3 + Math.floor(activeMatch.opponentStrength % 2)} pens)`
+                    : `(Lost ${3 - Math.floor(activeMatch.opponentStrength % 2)}-${4 - Math.floor(activeMatch.opponentStrength % 2)} pens)`}
               </span>
             )}
           </div>
@@ -697,26 +797,26 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
 
         </div>
 
-        {/* TABS SELECTOR (Only for Group Stage) */}
-        {activeMatch.round.startsWith('Group') && (
-          <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-zinc-850 gap-1">
-            <button 
-              onClick={() => setSimTab('commentary')}
-              className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${simTab === 'commentary' ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-450 hover:text-zinc-200'}`}
-            >
-              {isMounted && isTr ? 'Maç Anlatımı' : 'Commentary'}
-            </button>
-            <button 
-              onClick={() => setSimTab('standings')}
-              className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${simTab === 'standings' ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-450 hover:text-zinc-200'}`}
-            >
-              {isMounted ? t('sim_table_standings') : 'Group Standings'}
-            </button>
-          </div>
-        )}
+        {/* TABS SELECTOR (Group Standings or Tournament Path) */}
+        <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-zinc-850 gap-1">
+          <button 
+            onClick={() => setSimTab('commentary')}
+            className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${simTab === 'commentary' ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-450 hover:text-zinc-200'}`}
+          >
+            {isMounted && isTr ? 'Maç Anlatımı' : 'Commentary'}
+          </button>
+          <button 
+            onClick={() => setSimTab('standings')}
+            className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${simTab === 'standings' ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-450 hover:text-zinc-200'}`}
+          >
+            {activeMatch.round.startsWith('Group')
+              ? (isMounted ? t('sim_table_standings') : 'Group Standings')
+              : (isMounted && isTr ? 'Turnuva Yolu' : 'Tournament Path')}
+          </button>
+        </div>
 
         {/* CONDITIONALLY RENDER COMMENTARY OR STANDINGS */}
-        {(!activeMatch.round.startsWith('Group') || simTab === 'commentary') ? (
+        {simTab === 'commentary' ? (
           /* LIVE COMMENTARY TERMINAL TICKER */
           <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px]">
             <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-2 font-mono text-[9px] text-zinc-500 uppercase tracking-widest">
@@ -732,11 +832,15 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                 const isGoal = evt.includes('GOAL') || evt.includes('strikes') || evt.includes('GOOOOOL') || evt.includes('GOOOOOAL');
                 const isWin = evt.includes('WIN') || evt.includes('KAZANDIK') || evt.includes('advances') || evt.includes('passes');
                 const isLoss = evt.includes('LOSS') || evt.includes('ELENDİK') || evt.includes('eliminated') || evt.includes('contain');
+                const isQualified = evt.includes('QUALIFIED') || evt.includes('KALDINIZ');
+                const isGroupElim = evt.includes('ELIMINATED from') || evt.includes('TURNUVADAN ELENDİNİZ');
                 const isWarning = evt.includes('⚠️') || evt.includes('card') || evt.includes('yellow') || evt.includes('red') || evt.includes('faulle') || evt.includes('warning');
                 const isSystem = evt.startsWith('🏟️') || evt.startsWith('📢') || evt.includes('⏱️') || evt.includes('🏁') || evt.includes('KO:') || evt.includes('FT:');
 
                 let textClass = 'text-zinc-450';
-                if (isGoal) textClass = 'text-[#e8ff3b] font-black border-l-2 border-[#e8ff3b] pl-2 bg-zinc-900/40 py-1 rounded';
+                if (isQualified) textClass = 'text-emerald-400 font-black bg-emerald-950/30 p-2.5 border border-emerald-500/30 rounded-lg shadow-[0_0_12px_rgba(16,185,129,0.15)]';
+                else if (isGroupElim) textClass = 'text-red-400 font-black bg-red-950/30 p-2.5 border border-red-500/30 rounded-lg shadow-[0_0_12px_rgba(239,68,68,0.15)]';
+                else if (isGoal) textClass = 'text-[#e8ff3b] font-black border-l-2 border-[#e8ff3b] pl-2 bg-zinc-900/40 py-1 rounded';
                 else if (isWin) textClass = 'text-emerald-400 font-bold bg-emerald-950/20 p-2 border border-emerald-900/30 rounded';
                 else if (isLoss) textClass = 'text-red-400 font-bold bg-red-950/20 p-2 border border-red-900/30 rounded';
                 else if (isWarning) textClass = 'text-yellow-400 font-medium pl-2 border-l border-yellow-500/40 py-0.5 bg-yellow-950/5';
@@ -750,7 +854,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
               })}
             </div>
           </div>
-        ) : (
+        ) : activeMatch.round.startsWith('Group') ? (
           /* GROUP STANDINGS TABLE */
           <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px] overflow-y-auto select-none">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2 mb-2">
@@ -828,6 +932,67 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                   );
                 })}
               </div>
+            </div>
+          </div>
+        ) : (
+          /* KNOCKOUT TOURNAMENT PATH */
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px] overflow-y-auto select-none">
+            <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-3 font-mono text-[9px] text-[#e8ff3b] uppercase tracking-widest">
+              <Trophy className="w-3.5 h-3.5 text-[#e8ff3b]" />
+              <span>{isMounted && isTr ? 'TURNUVA YOLU' : 'TOURNAMENT PATH'}</span>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              {result.matches.map((match, idx) => {
+                const isPlayed = idx < currentMatchIdx || (idx === currentMatchIdx && (matchStage === 'POST_MATCH' || matchStage === 'ELIMINATED' || matchStage === 'CHAMPION_TRANS'));
+                const isCurrent = idx === currentMatchIdx && matchStage !== 'POST_MATCH' && matchStage !== 'ELIMINATED' && matchStage !== 'CHAMPION_TRANS';
+                const isFuture = idx > currentMatchIdx;
+                const isDraw = match.teamGoals === match.opponentGoals;
+                const isGroupMatch = match.round.startsWith('Group');
+
+                return (
+                  <div 
+                    key={idx} 
+                    className={`flex items-center gap-2 p-2 rounded-lg border text-[10px] font-mono transition-all ${
+                      isCurrent 
+                        ? 'border-[#e8ff3b]/40 bg-[#e8ff3b]/5 text-[#e8ff3b] shadow-[0_0_8px_rgba(232,255,59,0.1)]' 
+                        : isPlayed 
+                          ? (match.won 
+                              ? 'border-emerald-500/20 bg-emerald-950/10 text-emerald-400' 
+                              : isGroupMatch && isDraw 
+                                ? 'border-amber-500/20 bg-amber-950/10 text-amber-400'
+                                : 'border-red-500/20 bg-red-950/10 text-red-400')
+                          : 'border-zinc-800 bg-zinc-900/30 text-zinc-600'
+                    }`}
+                  >
+                    <span className="w-[52px] text-[8px] font-bold uppercase tracking-wider flex-shrink-0 text-center">
+                      {getLocalizedRound(match.round)}
+                    </span>
+                    <span className="flex-shrink-0 text-sm leading-none">{team.flag}</span>
+                    <span className="flex-1 truncate text-[9px]">
+                      {isPlayed || isCurrent 
+                        ? `vs ${match.opponentFlag} ${match.opponentName}`
+                        : `vs ???`}
+                    </span>
+                    {isPlayed && (
+                      <span className={`font-bold text-[9px] flex-shrink-0 ${
+                        match.won ? 'text-emerald-400' 
+                        : isGroupMatch && isDraw ? 'text-amber-400' 
+                        : 'text-red-400'
+                      }`}>
+                        {match.teamGoals}-{match.opponentGoals}
+                        {!isGroupMatch && isDraw && (match.won ? ' ✓p' : ' ✗p')}
+                      </span>
+                    )}
+                    {isCurrent && (
+                      <span className="text-[8px] animate-pulse flex-shrink-0 text-[#e8ff3b]">● {isMounted && isTr ? 'CANLI' : 'LIVE'}</span>
+                    )}
+                    {isFuture && (
+                      <span className="text-[8px] text-zinc-700 flex-shrink-0">—</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

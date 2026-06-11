@@ -262,7 +262,23 @@ export default function ResultPhase({
               <p className="text-xs text-zinc-400 mt-2 mb-6 max-w-xs mx-auto">
                 {result.won 
                   ? (isMounted ? (language === 'en' ? `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.` : `Tebrikler! ${team.flag} ${team.name} tüm eleme ağacını harika bir oyunla fethetti.`) : `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.`) 
-                  : (isMounted ? (language === 'en' ? `Knocked out in the ${getLocalizedRound(result.exitRound)}. Keep tuning tactics for another historical trial.` : `${getLocalizedRound(result.exitRound)} aşamasında elendiniz. Yeni bir tarihi deneme için taktiklerinizi ayarlamaya devam edin.`) : `Knocked out in the ${getLocalizedRound(result.exitRound)}. Keep tuning tactics for another historical trial.`)}
+                  : (() => {
+                      // Show detailed group exit info when eliminated in groups
+                      if (result.exitRound === 'Group Stage' && result.groups?.[0]) {
+                        const standings = result.groups[0].standings;
+                        const userStanding = standings.find(s => s.teamId === team.id);
+                        const rank = standings.findIndex(s => s.teamId === team.id) + 1;
+                        if (userStanding) {
+                          const gdSign = userStanding.goalDifference > 0 ? '+' : '';
+                          return isMounted 
+                            ? (language === 'en' 
+                                ? `Finished #${rank} in Group A with ${userStanding.points} pts (GD: ${gdSign}${userStanding.goalDifference}). Only top 2 advance — rebuild your tactics for another run.`
+                                : `Grup A'yı ${userStanding.points} puanla ${rank}. sırada tamamladınız (Av: ${gdSign}${userStanding.goalDifference}). İlk 2 tur atlar — bir sonraki deneme için taktiklerinizi yenileyin.`)
+                            : `Finished #${rank} in Group A with ${userStanding.points} pts (GD: ${gdSign}${userStanding.goalDifference}). Only top 2 advance.`;
+                        }
+                      }
+                      return isMounted ? (language === 'en' ? `Knocked out in the ${getLocalizedRound(result.exitRound)}. Keep tuning tactics for another historical trial.` : `${getLocalizedRound(result.exitRound)} aşamasında elendiniz. Yeni bir tarihi deneme için taktiklerinizi ayarlamaya devam edin.`) : `Knocked out in the ${getLocalizedRound(result.exitRound)}. Keep tuning tactics for another historical trial.`;
+                    })()}
               </p>
 
               {/* Big Score pop */}

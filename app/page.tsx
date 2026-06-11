@@ -107,7 +107,7 @@ export default function LandingPage() {
           <div>
             <div className="font-display font-bold text-lg sm:text-xl text-zinc-100 flex items-center justify-center gap-1">
               <Calendar className="w-4 h-4 text-[#e8ff3b] shrink-0" />
-              <span>18</span>
+              <span>13</span>
             </div>
             <p className="font-mono text-[9px] text-zinc-500 uppercase mt-0.5 tracking-wider">
               {isMounted ? t('dashboard_editions') : 'Editions'}

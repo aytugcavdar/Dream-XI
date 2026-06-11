@@ -265,6 +265,8 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
   const [currentOpponentGoals, setCurrentOpponentGoals] = useState(0);
   const [tickerEvents, setTickerEvents] = useState<string[]>([]);
   const [simPlaySpeed, setSimPlaySpeed] = useState<number>(1200); // ms per tick
+  const [simTab, setSimTab] = useState<'commentary' | 'standings'>('commentary');
+  const [selectedGroupIdx, setSelectedGroupIdx] = useState(0);
 
   // Match stage state: 'PRE_MATCH' | 'PLAYING' | 'POST_MATCH' | 'ELIMINATED' | 'CHAMPION_TRANS'
   const [matchStage, setMatchStage] = useState<'PRE_MATCH' | 'PLAYING' | 'POST_MATCH' | 'ELIMINATED' | 'CHAMPION_TRANS'>('PRE_MATCH');
@@ -274,6 +276,87 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
   const activeMatch: MatchResult = useMemo(() => {
     return result.matches[currentMatchIdx];
   }, [result.matches, currentMatchIdx]);
+
+  const groupActive = useMemo(() => {
+    return result.groups?.[selectedGroupIdx];
+  }, [result.groups, selectedGroupIdx]);
+
+  const currentStandings = useMemo(() => {
+    if (!groupActive || !activeMatch) return [];
+
+    let includeRound = 0;
+    if (activeMatch.round.includes('Group Match 1')) {
+      includeRound = matchStage === 'POST_MATCH' || matchStage === 'ELIMINATED' ? 1 : 0;
+    } else if (activeMatch.round.includes('Group Match 2')) {
+      includeRound = matchStage === 'POST_MATCH' || matchStage === 'ELIMINATED' ? 2 : 1;
+    } else if (activeMatch.round.includes('Group Match 3')) {
+      includeRound = matchStage === 'POST_MATCH' || matchStage === 'ELIMINATED' ? 3 : 2;
+    } else {
+      includeRound = 3;
+    }
+
+    const filteredMatches = groupActive.matches.filter(m => m.round <= includeRound);
+    const teamIds = Array.from(new Set(groupActive.matches.flatMap(m => [m.homeTeamId, m.awayTeamId])));
+    const teamDetails: Record<string, { name: string; flag: string }> = {};
+    groupActive.matches.forEach(m => {
+      teamDetails[m.homeTeamId] = { name: m.homeTeamName, flag: m.homeTeamFlag };
+      teamDetails[m.awayTeamId] = { name: m.awayTeamName, flag: m.awayTeamFlag };
+    });
+
+    const standingsMap: Record<string, any> = {};
+    teamIds.forEach(id => {
+      standingsMap[id] = {
+        teamId: id,
+        teamName: teamDetails[id]?.name || id,
+        teamFlag: teamDetails[id]?.flag || '🏳️',
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+        points: 0
+      };
+    });
+
+    filteredMatches.forEach(m => {
+      const home = standingsMap[m.homeTeamId];
+      const away = standingsMap[m.awayTeamId];
+      if (home && away) {
+        home.played += 1;
+        away.played += 1;
+        home.goalsFor += m.homeGoals;
+        home.goalsAgainst += m.awayGoals;
+        away.goalsFor += m.awayGoals;
+        away.goalsAgainst += m.homeGoals;
+
+        if (m.homeGoals > m.awayGoals) {
+          home.won += 1;
+          home.points += 3;
+          away.lost += 1;
+        } else if (m.awayGoals > m.homeGoals) {
+          away.won += 1;
+          away.points += 3;
+          home.lost += 1;
+        } else {
+          home.drawn += 1;
+          home.points += 1;
+          away.drawn += 1;
+          away.points += 1;
+        }
+      }
+    });
+
+    return Object.values(standingsMap).map((s: any) => ({
+      ...s,
+      goalDifference: s.goalsFor - s.goalsAgainst
+    })).sort((a: any, b: any) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+      return b.goalsFor - a.goalsFor;
+    });
+  }, [groupActive, activeMatch, matchStage]);
 
   const activeEvents = useMemo(() => {
     return [...(activeMatch?.events || [])].sort((a, b) => a.minute - b.minute);
@@ -482,6 +565,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     if (currentMatchIdx < result.matches.length - 1) {
       setCurrentMatchIdx(prev => prev + 1);
       setMatchStage('PRE_MATCH');
+      setSimTab('commentary');
     } else {
       // Completed all matches (won the trophy!)
       setMatchStage('CHAMPION_TRANS');
@@ -494,7 +578,10 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     if (name.includes('16') || name.includes('r16')) return t('sim_round_r16');
     if (name.includes('quarter')) return t('sim_round_qf');
     if (name.includes('semi')) return t('sim_round_sf');
-    if (name.includes('final')) return t('sim_round_final');
+    if (name.includes('final') && !name.includes('semi') && !name.includes('quarter')) return t('sim_round_final');
+    if (name.includes('group match 1')) return t('sim_round_gm1');
+    if (name.includes('group match 2')) return t('sim_round_gm2');
+    if (name.includes('group match 3')) return t('sim_round_gm3');
     return roundName;
   };
 
@@ -597,37 +684,124 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
 
         </div>
 
-        {/* LIVE COMMENTARY TERMINAL TICKER */}
-        <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px]">
-          <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-2 font-mono text-[9px] text-zinc-500 uppercase tracking-widest">
-            <Shield className="w-3.5 h-3.5 text-[#e8ff3b]" fill="currentColor" />
-            <span>REAL-TIME MATCH EVENTS PROTOCOL</span>
+        {/* TABS SELECTOR (Only for Group Stage) */}
+        {activeMatch.round.startsWith('Group') && (
+          <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-zinc-850 gap-1">
+            <button 
+              onClick={() => setSimTab('commentary')}
+              className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${simTab === 'commentary' ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-450 hover:text-zinc-200'}`}
+            >
+              {isMounted && isTr ? 'Maç Anlatımı' : 'Commentary'}
+            </button>
+            <button 
+              onClick={() => setSimTab('standings')}
+              className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${simTab === 'standings' ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-450 hover:text-zinc-200'}`}
+            >
+              {isMounted ? t('sim_table_standings') : 'Group Standings'}
+            </button>
           </div>
-          
-          <div 
-            ref={tickerRef}
-            className="flex-1 overflow-y-auto space-y-2.5 font-mono text-xs pr-1 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent selection:bg-[#e8ff3b]/20 selection:text-white"
-          >
-            {tickerEvents.map((evt, idx) => {
-              const isGoal = evt.includes('GOAL') || evt.includes('strikes');
-              const isWin = evt.includes('WIN');
-              const isLoss = evt.includes('LOSS');
-              const isSystem = evt.startsWith('🏟️') || evt.startsWith('📢');
+        )}
 
-              let textClass = 'text-zinc-450';
-              if (isGoal) textClass = 'text-[#e8ff3b] font-black border-l-2 border-[#e8ff3b] pl-2 bg-zinc-900/40 py-1 rounded';
-              else if (isWin) textClass = 'text-emerald-400 font-bold bg-emerald-950/20 p-2 border border-emerald-900/30 rounded';
-              else if (isLoss) textClass = 'text-red-400 font-bold bg-red-950/20 p-2 border border-red-900/30 rounded';
-              else if (isSystem) textClass = 'text-zinc-550 italic';
+        {/* CONDITIONALLY RENDER COMMENTARY OR STANDINGS */}
+        {(!activeMatch.round.startsWith('Group') || simTab === 'commentary') ? (
+          /* LIVE COMMENTARY TERMINAL TICKER */
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px]">
+            <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-2 font-mono text-[9px] text-zinc-500 uppercase tracking-widest">
+              <Shield className="w-3.5 h-3.5 text-[#e8ff3b]" fill="currentColor" />
+              <span>{isMounted && isTr ? 'GERÇEK ZAMANLI MAÇ OLAYLARI PROTOKOLÜ' : 'REAL-TIME MATCH EVENTS PROTOCOL'}</span>
+            </div>
+            
+            <div 
+              ref={tickerRef}
+              className="flex-1 overflow-y-auto space-y-2.5 font-mono text-xs pr-1 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent selection:bg-[#e8ff3b]/20 selection:text-white"
+            >
+              {tickerEvents.map((evt, idx) => {
+                const isGoal = evt.includes('GOAL') || evt.includes('strikes') || evt.includes('GOOOOOL') || evt.includes('GOOOOOAL');
+                const isWin = evt.includes('WIN') || evt.includes('KAZANDIK') || evt.includes('advances') || evt.includes('passes');
+                const isLoss = evt.includes('LOSS') || evt.includes('ELENDİK') || evt.includes('eliminated') || evt.includes('contain');
+                const isSystem = evt.startsWith('🏟️') || evt.startsWith('📢') || evt.includes('⏱️') || evt.includes('🏁') || evt.includes('KO:') || evt.includes('FT:');
 
-              return (
-                <div key={idx} className={`leading-relaxed text-[11px] ${textClass}`}>
-                  {evt}
-                </div>
-              );
-            })}
+                let textClass = 'text-zinc-450';
+                if (isGoal) textClass = 'text-[#e8ff3b] font-black border-l-2 border-[#e8ff3b] pl-2 bg-zinc-900/40 py-1 rounded';
+                else if (isWin) textClass = 'text-emerald-400 font-bold bg-emerald-950/20 p-2 border border-emerald-900/30 rounded';
+                else if (isLoss) textClass = 'text-red-400 font-bold bg-red-950/20 p-2 border border-red-900/30 rounded';
+                else if (isSystem) textClass = 'text-zinc-550 italic';
+
+                return (
+                  <div key={idx} className={`leading-relaxed text-[11px] ${textClass}`}>
+                    {evt}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* GROUP STANDINGS TABLE */
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px] overflow-y-auto select-none">
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-2 mb-2">
+              <div className="flex items-center gap-1.5 font-mono text-[9px] text-[#e8ff3b] uppercase tracking-widest">
+                <Users className="w-3.5 h-3.5 text-[#e8ff3b]" fill="currentColor" />
+                <span>{isMounted ? t('sim_table_standings') : 'Group Standings'}</span>
+              </div>
+              <div className="flex gap-1 bg-zinc-900/50 p-0.5 rounded-lg border border-zinc-800 text-[9px] font-mono font-bold">
+                {[0, 1, 2, 3].map((idx) => {
+                  const letters = ['A', 'B', 'C', 'D'];
+                  const isActive = selectedGroupIdx === idx;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedGroupIdx(idx)}
+                      className={`px-2 py-0.5 rounded transition-all uppercase ${isActive ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-500 hover:text-zinc-350'}`}
+                    >
+                      {letters[idx]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <table className="w-full text-left font-mono text-[10px] mt-1">
+              <thead>
+                <tr className="text-zinc-550 border-b border-zinc-900 pb-1.5 text-[8px] uppercase tracking-wider">
+                  <th className="pb-1.5 font-bold">{isMounted ? t('sim_table_team') : 'TEAM'}</th>
+                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_played') : 'P'}</th>
+                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_won') : 'W'}</th>
+                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_drawn') : 'D'}</th>
+                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_lost') : 'L'}</th>
+                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_goals') : 'GF-GA'}</th>
+                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_difference') : 'GD'}</th>
+                  <th className="pb-1.5 text-right font-bold">{isMounted ? t('sim_table_points') : 'PTS'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-900">
+                {currentStandings.map((standing: any, index: number) => {
+                  const isUser = standing.teamId === team.id;
+                  const isQualifying = index < 2;
+                  return (
+                    <tr 
+                      key={standing.teamId} 
+                      className={`border-b border-zinc-900/50 ${isUser ? 'text-[#e8ff3b] font-bold bg-[#e8ff3b]/5' : 'text-zinc-350'}`}
+                    >
+                      <td className="py-2 flex items-center gap-1 min-w-[100px] truncate">
+                        <span className={`w-1 h-1 rounded-full flex-shrink-0 ${isQualifying ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                        <span className="text-sm leading-none flex-shrink-0">{standing.teamFlag}</span>
+                        <span className="truncate max-w-[80px] sm:max-w-none">{standing.teamName}</span>
+                      </td>
+                      <td className="py-2 text-center">{standing.played}</td>
+                      <td className="py-2 text-center">{standing.won}</td>
+                      <td className="py-2 text-center">{standing.drawn}</td>
+                      <td className="py-2 text-center">{standing.lost}</td>
+                      <td className="py-2 text-center text-zinc-500">{standing.goalsFor}-{standing.goalsAgainst}</td>
+                      <td className={`py-2 text-center font-semibold ${standing.goalDifference > 0 ? 'text-emerald-400' : standing.goalDifference < 0 ? 'text-red-400' : 'text-zinc-550'}`}>
+                        {standing.goalDifference > 0 ? `+${standing.goalDifference}` : standing.goalDifference}
+                      </td>
+                      <td className="py-2 text-right font-bold text-zinc-100">{standing.points}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* BOTTOM STEP CONTROLS ROW */}
         <div className="flex justify-between items-center pt-2 gap-4">

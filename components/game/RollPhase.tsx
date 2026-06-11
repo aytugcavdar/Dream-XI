@@ -212,7 +212,7 @@ export default function RollPhase({ onRoll, historyCount, onNavigateHistory }: R
         {/* Small Facts row */}
         <div className="grid grid-cols-3 gap-2 border-t border-zinc-900 pt-6 mt-8 text-center text-zinc-500">
           <div>
-            <div className="font-display font-semibold text-sm text-zinc-300 leading-none mb-1">18</div>
+            <div className="font-display font-semibold text-sm text-zinc-300 leading-none mb-1">13</div>
             <div className="font-mono text-[9px] uppercase tracking-wider">
               {isMounted ? t('dashboard_editions') : 'Editions'}
             </div>

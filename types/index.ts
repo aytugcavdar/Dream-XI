@@ -115,7 +115,7 @@ export interface MatchEvent {
 }
 
 export interface MatchResult {
-  round: 'Round of 16' | 'Quarter-Finals' | 'Semi-Finals' | 'Final';
+  round: 'Group Match 1' | 'Group Match 2' | 'Group Match 3' | 'Round of 16' | 'Quarter-Finals' | 'Semi-Finals' | 'Final';
   opponentName: string;
   opponentFlag: string;
   opponentStrength: number;
@@ -142,10 +142,54 @@ export interface PlayerSeasonStats {
   motmCount: number; // Number of Man of the Match awards
 }
 
+export interface GroupStanding {
+  teamId: string;
+  teamName: string;
+  teamFlag: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
+export interface GroupMatch {
+  round: number; // 1, 2, 3
+  homeTeamId: string;
+  homeTeamName: string;
+  homeTeamFlag: string;
+  awayTeamId: string;
+  awayTeamName: string;
+  awayTeamFlag: string;
+  homeGoals: number;
+  awayGoals: number;
+}
+
+export interface GroupData {
+  name: string; // e.g. "Group A", "Group B"
+  standings: GroupStanding[];
+  matches: GroupMatch[];
+}
+
+export interface TournamentPlayerStat {
+  playerId: string;
+  playerName: string;
+  playerRating: number;
+  position: string;
+  teamId: string;
+  teamName: string;
+  teamFlag: string;
+  goals: number;
+  assists: number;
+}
+
 export interface SimulationResult {
   won: boolean; // Did they win the final?
   finalScore: string; // e.g., "3-2" or "1-2" depending on where they exited
-  exitRound: 'Round of 16' | 'Quarter-Finals' | 'Semi-Finals' | 'Final' | 'Champion';
+  exitRound: 'Group Stage' | 'Round of 16' | 'Quarter-Finals' | 'Semi-Finals' | 'Final' | 'Champion';
   matches: MatchResult[];
   playerSeasonStats: PlayerSeasonStats[];
   mvp: Player; // Overall tournament MVP (best avg rating)
@@ -159,6 +203,11 @@ export interface SimulationResult {
     avgPossession: number;
     avgPassAccuracy: number;
     cleanSheets: number;
+  };
+  groups?: GroupData[]; // Added for group stage
+  tournamentStats?: {
+    topScorers: TournamentPlayerStat[];
+    topAssisters: TournamentPlayerStat[];
   };
 }
 

@@ -1,11 +1,6 @@
 import { WorldCupEdition } from '../types';
 
 export const editions: WorldCupEdition[] = [
-  { year: 1954, host: 'Switzerland', champion: 'West Germany', topScorer: 'Sándor Kocsis (11)' },
-  { year: 1958, host: 'Sweden', champion: 'Brazil', topScorer: 'Just Fontaine (13)' },
-  { year: 1962, host: 'Chile', champion: 'Brazil', topScorer: 'Flórián Albert (4)' },
-  { year: 1966, host: 'England', champion: 'England', topScorer: 'Eusébio (9)' },
-  { year: 1970, host: 'Mexico', champion: 'Brazil', topScorer: 'Gerd Müller (10)' },
   { year: 1974, host: 'West Germany', champion: 'West Germany', topScorer: 'Grzegorz Lato (7)' },
   { year: 1978, host: 'Argentina', champion: 'Argentina', topScorer: 'Mario Kempes (6)' },
   { year: 1982, host: 'Spain', champion: 'Italy', topScorer: 'Paolo Rossi (6)' },

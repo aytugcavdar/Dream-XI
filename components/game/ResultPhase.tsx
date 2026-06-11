@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Player, NationalTeam, SimulationResult, GameRecord, SortKey } from '@/types';
+import { Player, NationalTeam, SimulationResult, GameRecord, SortKey, TournamentPlayerStat } from '@/types';
 import { MAX_HISTORY_RECORDS } from '@/lib/constants';
 import { Award, Trophy, ChevronRight, Sparkles, BarChart3, Medal, Calendar, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -34,6 +34,7 @@ export default function ResultPhase({
 }: ResultPhaseProps) {
   const [historyList, setHistoryList] = useState<GameRecord[]>([]);
   const [sortBy, setSortBy] = useState<SortKey>('rating');
+  const [activeStatsTab, setActiveStatsTab] = useState<'squad' | 'scorers' | 'assisters'>('squad');
   const hasSaved = useRef(false);
 
   // Load and save historic record when result mounts
@@ -168,6 +169,53 @@ export default function ResultPhase({
 
   const { t, language, isMounted } = useLanguage();
 
+  const getLocalizedRound = (roundName: string) => {
+    if (!isMounted) return roundName;
+    const name = roundName.toLowerCase();
+    if (name.includes('16') || name.includes('r16')) return t('sim_round_r16');
+    if (name.includes('quarter')) return t('sim_round_qf');
+    if (name.includes('semi')) return t('sim_round_sf');
+    if (name.includes('final') && !name.includes('semi') && !name.includes('quarter')) return t('sim_round_final');
+    if (name.includes('group stage')) return t('sim_round_group_stage');
+    if (name.includes('group match 1')) return t('sim_round_gm1');
+    if (name.includes('group match 2')) return t('sim_round_gm2');
+    if (name.includes('group match 3')) return t('sim_round_gm3');
+    return roundName;
+  };
+
+  const getPositionGroup = (pos: string): 'GK' | 'DEF' | 'MID' | 'ATT' => {
+    if (pos === 'GK') return 'GK';
+    if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF';
+    if (['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(pos)) return 'MID';
+    return 'ATT';
+  };
+
+  const handleOpenOpponentModal = (stat: TournamentPlayerStat) => {
+    const oppPlayer: Player = {
+      id: stat.playerId,
+      name: stat.playerName,
+      country: stat.teamId,
+      position: stat.position as any,
+      positionGroup: getPositionGroup(stat.position),
+      rating: stat.playerRating,
+      worldCups: [year],
+      era: year.toString(),
+      bio: isMounted
+        ? (language === 'en'
+            ? `Elite representative of ${stat.teamFlag} ${stat.teamName} competing in the historical ${year} tournament.`
+            : `${stat.teamFlag} ${stat.teamName} takımının ${year} yılındaki tarihi kadrosunu temsil eden elit oyuncu.`)
+        : `Elite representative of ${stat.teamFlag} ${stat.teamName} competing in the historical ${year} tournament.`,
+      wcStats: {
+        goals: stat.goals,
+        assists: stat.assists,
+        matches: 4,
+        passAccuracy: 82,
+        xG: Number((stat.goals * 0.9 + stat.assists * 0.3 + 0.5).toFixed(1))
+      }
+    };
+    onOpenPlayerModal(oppPlayer);
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6 animate-slide-up flex flex-col justify-between">
       
@@ -214,7 +262,7 @@ export default function ResultPhase({
               <p className="text-xs text-zinc-400 mt-2 mb-6 max-w-xs mx-auto">
                 {result.won 
                   ? (isMounted ? (language === 'en' ? `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.` : `Tebrikler! ${team.flag} ${team.name} tüm eleme ağacını harika bir oyunla fethetti.`) : `Congratulations! ${team.flag} ${team.name} conquered the global knockout grid with complete style.`) 
-                  : (isMounted ? (language === 'en' ? `Knocked out in the ${result.exitRound}. Keep tuning tactics for another historical trial.` : `${result.exitRound} aşamasında elendiniz. Yeni bir tarihi deneme için taktiklerinizi ayarlamaya devam edin.`) : `Knocked out in the ${result.exitRound}. Keep tuning tactics for another historical trial.`)}
+                  : (isMounted ? (language === 'en' ? `Knocked out in the ${getLocalizedRound(result.exitRound)}. Keep tuning tactics for another historical trial.` : `${getLocalizedRound(result.exitRound)} aşamasında elendiniz. Yeni bir tarihi deneme için taktiklerinizi ayarlamaya devam edin.`) : `Knocked out in the ${getLocalizedRound(result.exitRound)}. Keep tuning tactics for another historical trial.`)}
               </p>
 
               {/* Big Score pop */}
@@ -248,9 +296,9 @@ export default function ResultPhase({
                   >
                     {/* Round Label & Opponent Details */}
                     <div className="flex items-center gap-3">
-                      <div className="text-right flex flex-col items-end">
-                        <span className="font-mono text-[9px] text-zinc-600 leading-none">R{idx+1}</span>
-                        <span className="font-display font-bold text-xs text-zinc-100">{match.round.split(' ')[0]}</span>
+                      <div className="text-right flex flex-col items-end min-w-[70px]">
+                        <span className="font-mono text-[9px] text-zinc-650 leading-none">M{idx+1}</span>
+                        <span className="font-display font-bold text-[10px] text-zinc-300 leading-tight">{getLocalizedRound(match.round)}</span>
                       </div>
                       <div className="h-6 w-px bg-zinc-850" />
                       <div className="flex items-center gap-2">
@@ -271,11 +319,17 @@ export default function ResultPhase({
                         {match.teamGoals} - {match.opponentGoals}
                       </span>
                       <span className={`text-[9px] font-mono font-bold tracking-widest uppercase px-1.5 py-0.5 rounded ${
-                        match.won 
-                          ? 'bg-emerald-500/10 text-[#e8ff3b] border border-emerald-500/10' 
-                          : 'bg-red-500/10 text-red-400 border border-red-500/10'
+                        match.teamGoals === match.opponentGoals
+                          ? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/10'
+                          : match.won 
+                            ? 'bg-emerald-500/10 text-[#e8ff3b] border border-emerald-500/10' 
+                            : 'bg-red-500/10 text-red-400 border border-red-500/10'
                       }`}>
-                        {match.won ? (isMounted ? (language === 'en' ? 'WIN' : 'GALİBİYET') : 'WIN') : (isMounted ? (language === 'en' ? 'LOSS' : 'MAĞLUBİYET') : 'LOSS')}
+                        {match.teamGoals === match.opponentGoals
+                          ? (isMounted ? (language === 'en' ? 'DRAW' : 'BERABERLİK') : 'DRAW')
+                          : match.won
+                            ? (isMounted ? (language === 'en' ? 'WIN' : 'GALİBİYET') : 'WIN')
+                            : (isMounted ? (language === 'en' ? 'LOSS' : 'MAĞLUBİYET') : 'LOSS')}
                       </span>
                     </div>
                   </div>
@@ -387,38 +441,99 @@ export default function ResultPhase({
 
           {/* Roster aggregation table */}
           <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-5">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-              <div>
-                <h3 className="font-display font-bold text-xs sm:text-sm uppercase text-zinc-200 tracking-wider">
-                  {isMounted ? (language === 'en' ? 'Squad Tournament Metrics' : 'Takım Turnuva İstatistikleri') : 'Squad Tournament Metrics'}
-                </h3>
-                <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">
-                  {isMounted ? (language === 'en' ? 'click info button for bio logs' : 'biyografi kayıtları için bilgi butonuna tıklayın') : 'click info button for bio logs'}
-                </p>
-              </div>
+            {result.tournamentStats ? (
+              <div className="flex flex-col gap-4 mb-5">
+                {/* Tabs row */}
+                <div className="flex border-b border-zinc-900 pb-1 gap-2 overflow-x-auto scrollbar-none">
+                  {(['squad', 'scorers', 'assisters'] as const).map((tabId) => {
+                    const isActive = activeStatsTab === tabId;
+                    let tabLabel = '';
+                    if (tabId === 'squad') tabLabel = isMounted ? t('result_tab_squad') : 'My Squad';
+                    else if (tabId === 'scorers') tabLabel = isMounted ? t('result_tab_scorers') : 'Top Scorers';
+                    else if (tabId === 'assisters') tabLabel = isMounted ? t('result_tab_assisters') : 'Top Assisters';
 
-              {/* Sorting triggers row */}
-              <div className="flex items-center gap-1.5 bg-zinc-900/60 border border-zinc-900 p-1 rounded-lg text-[10px] font-mono font-bold w-fit">
-                {['rating', 'goals', 'assists', 'xG'].map((opt) => {
-                  const isActive = sortBy === opt;
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => setSortBy(opt as SortKey)}
-                      className={`px-2 py-1 rounded capitalize transition-all ${
-                        isActive ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-400 hover:text-zinc-200'
-                      }`}
-                    >
-                      {opt === 'rating' ? (isMounted ? (language === 'en' ? 'Rating' : 'GEN') : 'Rating') : opt === 'goals' ? 'G' : opt === 'assists' ? 'A' : opt}
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={tabId}
+                        onClick={() => setActiveStatsTab(tabId)}
+                        className={`pb-2 px-1 text-xs uppercase font-display font-bold tracking-wider transition-all border-b-2 -mb-[5px] shrink-0 ${
+                          isActive 
+                            ? 'border-[#e8ff3b] text-[#e8ff3b] font-black' 
+                            : 'border-transparent text-zinc-500 hover:text-zinc-355'
+                        }`}
+                      >
+                        {tabLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Subheader or Sorting triggers */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div>
+                    <h3 className="font-display font-bold text-xs uppercase text-zinc-200 tracking-wider">
+                      {activeStatsTab === 'squad' && (isMounted ? (language === 'en' ? 'Squad Tournament Metrics' : 'Takım Turnuva İstatistikleri') : 'Squad Tournament Metrics')}
+                      {activeStatsTab === 'scorers' && (isMounted ? t('result_tournament_scorers') : 'Tournament Top Scorers')}
+                      {activeStatsTab === 'assisters' && (isMounted ? t('result_tournament_assisters') : 'Tournament Top Assisters')}
+                    </h3>
+                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">
+                      {isMounted ? (language === 'en' ? 'click info button for bio logs' : 'biyografi kayıtları için bilgi butonuna tıklayın') : 'click info button for bio logs'}
+                    </p>
+                  </div>
+
+                  {activeStatsTab === 'squad' && (
+                    <div className="flex items-center gap-1.5 bg-zinc-900/60 border border-zinc-900 p-1 rounded-lg text-[10px] font-mono font-bold w-fit">
+                      {['rating', 'goals', 'assists', 'xG'].map((opt) => {
+                        const isActive = sortBy === opt;
+                        return (
+                          <button
+                            key={opt}
+                            onClick={() => setSortBy(opt as SortKey)}
+                            className={`px-2 py-1 rounded capitalize transition-all ${
+                              isActive ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-400 hover:text-zinc-200'
+                            }`}
+                          >
+                            {opt === 'rating' ? (isMounted ? (language === 'en' ? 'Rating' : 'GEN') : 'Rating') : opt === 'goals' ? 'G' : opt === 'assists' ? 'A' : opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+                <div>
+                  <h3 className="font-display font-bold text-xs sm:text-sm uppercase text-zinc-200 tracking-wider">
+                    {isMounted ? (language === 'en' ? 'Squad Tournament Metrics' : 'Takım Turnuva İstatistikleri') : 'Squad Tournament Metrics'}
+                  </h3>
+                  <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">
+                    {isMounted ? (language === 'en' ? 'click info button for bio logs' : 'biyografi kayıtları için bilgi butonuna tıklayın') : 'click info button for bio logs'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-zinc-900/60 border border-zinc-900 p-1 rounded-lg text-[10px] font-mono font-bold w-fit">
+                  {['rating', 'goals', 'assists', 'xG'].map((opt) => {
+                    const isActive = sortBy === opt;
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => setSortBy(opt as SortKey)}
+                        className={`px-2 py-1 rounded capitalize transition-all ${
+                          isActive ? 'bg-[#e8ff3b] text-black font-extrabold' : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        {opt === 'rating' ? (isMounted ? (language === 'en' ? 'Rating' : 'GEN') : 'Rating') : opt === 'goals' ? 'G' : opt === 'assists' ? 'A' : opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Dense Spreadsheet List */}
             <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
-              {sortedSeasonPlayers.map((statsRow, idx) => {
+              {(activeStatsTab === 'squad' || !result.tournamentStats) && sortedSeasonPlayers.map((statsRow, idx) => {
                 const isMVP = statsRow.playerId === result.mvp.id;
                 
                 // Let's resolve the player object
@@ -470,6 +585,120 @@ export default function ResultPhase({
                       <button
                         id={`player-stats-info-btn-${statsRow.playerId}`}
                         onClick={() => onOpenPlayerModal(details)}
+                        className="p-1 hover:bg-zinc-800 rounded border border-zinc-850 hover:border-zinc-700 text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0"
+                      >
+                        <span className="text-[10px] leading-none uppercase px-1.5 py-0.5 font-sans font-semibold">ℹ️</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {activeStatsTab === 'scorers' && result.tournamentStats && (result.tournamentStats.topScorers || []).map((statsRow, idx) => {
+                const isUserPlayer = Object.values(squad).some(p => p !== null && p.id === statsRow.playerId);
+                
+                return (
+                  <div 
+                    key={statsRow.playerId}
+                    className={`p-2 rounded-xl border flex items-center justify-between gap-4 ${
+                      isUserPlayer 
+                        ? 'bg-[#e8ff3b]/5 border-[#e8ff3b]/25 shadow-[0_0_15px_rgba(232,255,59,0.03)]' 
+                        : 'bg-zinc-900/30 border-zinc-900'
+                    }`}
+                  >
+                    {/* Pos Label and Identity */}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className="font-mono text-[10px] text-zinc-500 font-black min-w-[15px] text-center">
+                        {idx + 1}
+                      </span>
+                      <span className={`text-[9px] font-mono font-bold uppercase py-0.5 px-1.5 rounded border ${getPositionStyle(getPositionGroup(statsRow.position))} flex-shrink-0`}>
+                        {statsRow.position}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-sans font-bold text-xs text-zinc-200 truncate flex items-center gap-1">
+                          <span>{statsRow.playerName}</span>
+                          {isUserPlayer && <Trophy className="w-3 h-3 text-[#e8ff3b] inline" />}
+                        </div>
+                        <div className="font-mono text-[9px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs select-none leading-none">{statsRow.teamFlag}</span>
+                          <span className="truncate">{statsRow.teamName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats Rows */}
+                    <div className="flex items-center gap-3 font-mono text-[10px] text-zinc-400 pl-2">
+                      <div className="w-16 py-0.5 px-2 bg-[#e8ff3b]/10 text-[#e8ff3b] border border-[#e8ff3b]/20 rounded-full text-center font-extrabold text-[10px]">
+                        {statsRow.goals} {isMounted ? (language === 'en' ? 'Goals' : 'Gol') : 'Goals'}
+                      </div>
+                      <div className="w-12 text-center text-zinc-550">
+                        {statsRow.assists} {isMounted ? (language === 'en' ? 'Ast' : 'Ast') : 'Ast'}
+                      </div>
+                      <div className="w-12 py-1 border border-zinc-850 bg-zinc-900/40 rounded text-center text-[10px] font-bold text-zinc-400">
+                        OVR {statsRow.playerRating}
+                      </div>
+
+                      {/* Info Hook */}
+                      <button
+                        id={`player-stats-info-btn-${statsRow.playerId}`}
+                        onClick={() => handleOpenOpponentModal(statsRow)}
+                        className="p-1 hover:bg-zinc-800 rounded border border-zinc-850 hover:border-zinc-700 text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0"
+                      >
+                        <span className="text-[10px] leading-none uppercase px-1.5 py-0.5 font-sans font-semibold">ℹ️</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {activeStatsTab === 'assisters' && result.tournamentStats && (result.tournamentStats.topAssisters || []).map((statsRow, idx) => {
+                const isUserPlayer = Object.values(squad).some(p => p !== null && p.id === statsRow.playerId);
+                
+                return (
+                  <div 
+                    key={statsRow.playerId}
+                    className={`p-2 rounded-xl border flex items-center justify-between gap-4 ${
+                      isUserPlayer 
+                        ? 'bg-[#e8ff3b]/5 border-[#e8ff3b]/25 shadow-[0_0_15px_rgba(232,255,59,0.03)]' 
+                        : 'bg-zinc-900/30 border-zinc-900'
+                    }`}
+                  >
+                    {/* Pos Label and Identity */}
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className="font-mono text-[10px] text-zinc-500 font-black min-w-[15px] text-center">
+                        {idx + 1}
+                      </span>
+                      <span className={`text-[9px] font-mono font-bold uppercase py-0.5 px-1.5 rounded border ${getPositionStyle(getPositionGroup(statsRow.position))} flex-shrink-0`}>
+                        {statsRow.position}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-sans font-bold text-xs text-zinc-200 truncate flex items-center gap-1">
+                          <span>{statsRow.playerName}</span>
+                          {isUserPlayer && <Trophy className="w-3 h-3 text-[#e8ff3b] inline" />}
+                        </div>
+                        <div className="font-mono text-[9px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs select-none leading-none">{statsRow.teamFlag}</span>
+                          <span className="truncate">{statsRow.teamName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats Rows */}
+                    <div className="flex items-center gap-3 font-mono text-[10px] text-zinc-400 pl-2">
+                      <div className="w-12 text-center text-zinc-550">
+                        {statsRow.goals} {isMounted ? (language === 'en' ? 'Gls' : 'Gol') : 'Gls'}
+                      </div>
+                      <div className="w-18 py-0.5 px-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-center font-extrabold text-[10px]">
+                        {statsRow.assists} {isMounted ? (language === 'en' ? 'Assists' : 'Asist') : 'Assists'}
+                      </div>
+                      <div className="w-12 py-1 border border-zinc-850 bg-zinc-900/40 rounded text-center text-[10px] font-bold text-zinc-400">
+                        OVR {statsRow.playerRating}
+                      </div>
+
+                      {/* Info Hook */}
+                      <button
+                        id={`player-stats-info-btn-${statsRow.playerId}`}
+                        onClick={() => handleOpenOpponentModal(statsRow)}
                         className="p-1 hover:bg-zinc-800 rounded border border-zinc-850 hover:border-zinc-700 text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0"
                       >
                         <span className="text-[10px] leading-none uppercase px-1.5 py-0.5 font-sans font-semibold">ℹ️</span>

@@ -258,6 +258,9 @@ export default function ResultPhase({
                         <div className="flex flex-col">
                           <span className="font-sans font-bold text-xs text-zinc-200">{match.opponentName}</span>
                           <span className="font-mono text-[8px] text-zinc-500 uppercase tracking-wider">Pwr: {match.opponentStrength * 10}</span>
+                          <span className="font-mono text-[8px] text-zinc-600 uppercase tracking-wider">
+                            xG {match.teamXG?.toFixed(2) ?? '0.00'}-{match.opponentXG?.toFixed(2) ?? '0.00'} | Poss {match.possession ?? result.teamStats.avgPossession}%
+                          </span>
                         </div>
                       </div>
                     </div>

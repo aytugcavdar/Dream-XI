@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Player, NationalTeam, ChemistryBreakdown } from '@/types';
 import { RotateCcw, Search, Star, Sparkles, Info } from 'lucide-react';
 import { SidebarProgressFooter } from './SidebarRollState';
@@ -44,6 +44,37 @@ export default function SidebarActiveDraft({
   onCancelSelection,
 }: SidebarActiveDraftProps) {
   const { t, isMounted } = useLanguage();
+  const [groupFilter, setGroupFilter] = useState<'ALL' | Player['positionGroup']>('ALL');
+  const [sortMode, setSortMode] = useState<'rating' | 'name' | 'position'>('rating');
+
+  const groupFilters: Array<'ALL' | Player['positionGroup']> = ['ALL', 'GK', 'DEF', 'MID', 'ATT'];
+
+  const groupCounts = useMemo(() => {
+    return filteredPlayers.reduce<Record<string, number>>((acc, player) => {
+      acc[player.positionGroup] = (acc[player.positionGroup] || 0) + 1;
+      return acc;
+    }, { ALL: filteredPlayers.length });
+  }, [filteredPlayers]);
+
+  const visiblePlayers = useMemo(() => {
+    return filteredPlayers
+      .filter(player => groupFilter === 'ALL' || player.positionGroup === groupFilter)
+      .sort((a, b) => {
+        if (sortMode === 'name') return a.name.localeCompare(b.name);
+        if (sortMode === 'position') return a.positionGroup.localeCompare(b.positionGroup) || b.rating - a.rating;
+        return b.rating - a.rating;
+      });
+  }, [filteredPlayers, groupFilter, sortMode]);
+
+  const bestAvailablePlayer = useMemo(() => {
+    return visiblePlayers.find(player => !isPlayerAssigned(player.id) && !isPositionLimitReached(player.positionGroup));
+  }, [visiblePlayers, isPlayerAssigned, isPositionLimitReached]);
+
+  const withGoldenRating = (player: Player) => {
+    const isGoldenCard = isGoldenBallActive && (player.rating >= 92 || player.legendary === true);
+    return isGoldenCard ? { ...player, rating: Math.min(99, player.rating + 2) } : player;
+  };
+
   return (
     <div className="bg-zinc-950 border border-zinc-900 p-5 rounded-2xl h-full flex flex-col justify-between">
       <div>
@@ -134,14 +165,61 @@ export default function SidebarActiveDraft({
           />
         </div>
 
+        <div className="mb-4 space-y-3">
+          <div className="grid grid-cols-5 gap-1.5">
+            {groupFilters.map(group => {
+              const active = groupFilter === group;
+              return (
+                <button
+                  key={group}
+                  onClick={() => setGroupFilter(group)}
+                  className={`rounded-lg border px-2 py-1.5 text-[10px] font-mono font-bold transition-all ${
+                    active
+                      ? 'border-[#e8ff3b] bg-[#e8ff3b] text-black'
+                      : 'border-zinc-850 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'
+                  }`}
+                >
+                  <span>{group}</span>
+                  <span className={`ml-1 ${active ? 'text-black/70' : 'text-zinc-600'}`}>
+                    {groupCounts[group] || 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <select
+              value={sortMode}
+              onChange={(event) => setSortMode(event.target.value as 'rating' | 'name' | 'position')}
+              className="bg-zinc-900/60 border border-zinc-850 text-zinc-300 rounded-lg px-2 py-2 text-[10px] font-mono uppercase focus:outline-none focus:border-[#e8ff3b]"
+            >
+              <option value="rating">Sort: Rating</option>
+              <option value="position">Sort: Role</option>
+              <option value="name">Sort: Name</option>
+            </select>
+            <button
+              disabled={!bestAvailablePlayer}
+              onClick={() => bestAvailablePlayer && onSelectPlayer(withGoldenRating(bestAvailablePlayer))}
+              className={`rounded-lg border px-3 py-2 text-[10px] font-mono font-bold uppercase transition-all ${
+                bestAvailablePlayer
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/20'
+                  : 'border-zinc-900 bg-zinc-950/50 text-zinc-650 cursor-not-allowed'
+              }`}
+            >
+              Best Pick
+            </button>
+          </div>
+        </div>
+
         {/* Player list */}
         <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
-          {filteredPlayers.length === 0 ? (
+          {visiblePlayers.length === 0 ? (
             <div className="text-center py-10 text-zinc-600 font-mono text-xs">
               {isMounted ? t('build_no_players_search') : 'No players matching search criteria'}
             </div>
           ) : (
-            filteredPlayers.map((player) => {
+            visiblePlayers.map((player) => {
               const isAssigned = isPlayerAssigned(player.id);
               const isSelected = selectedPlayerForAssignment?.id === player.id;
               const isPositionFull = !isAssigned && isPositionLimitReached(player.positionGroup);
@@ -174,8 +252,7 @@ export default function SidebarActiveDraft({
                   <button
                     disabled={isAssigned || isPositionFull}
                     onClick={() => {
-                      const chosenPlayer = isGoldenCard ? { ...player, rating: displayRating } : player;
-                      onSelectPlayer(chosenPlayer);
+                      onSelectPlayer(withGoldenRating(player));
                     }}
                     className="flex-1 flex items-center gap-2.5 cursor-pointer text-left focus:outline-none"
                   >

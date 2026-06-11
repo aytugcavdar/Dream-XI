@@ -401,7 +401,25 @@ export default function BuildPhase({
   // Handle slot click
   const handleSlotClick = (slotId: string, playerSelected: Player | null, slotGroup?: string) => {
     if (playerSelected) {
-      // Once placed in a position slot, the player cannot be deleted/removed
+      const updated = { ...squad };
+
+      if (selectedPlayerForAssignment && (!slotGroup || selectedPlayerForAssignment.positionGroup === slotGroup)) {
+        Object.keys(updated).forEach(key => {
+          if (updated[key]?.id === selectedPlayerForAssignment.id) {
+            updated[key] = null;
+          }
+        });
+        updated[slotId] = selectedPlayerForAssignment;
+        setSelectedPlayerForAssignment(null);
+        setCurrentDraftRoll(null);
+        setSearchQuery('');
+        playSound('place');
+      } else {
+        updated[slotId] = null;
+        playSound('clear');
+      }
+
+      onUpdateSquad(updated);
       return;
     } else {
       // If we have a player selected in the sidebar, let's slot them in if compatible
@@ -569,11 +587,9 @@ export default function BuildPhase({
   };
 
   // Helper check to see if a certain position's draft capacity is fully met in active squad setup
-  const isPositionLimitReached = (position: string) => {
-    // Determine target quantity of slots with role matching "position" in active scheme
-    const capacity = Math.max(1, activeFormation.slots.filter(s => s.role === position).length);
-    // Count how many players with this position are already drafted in the squad
-    const currentCount = squadPlayers.filter(p => p.position === position).length;
+  const isPositionLimitReached = (positionGroup: string) => {
+    const capacity = activeFormation.slots.filter(s => s.positionGroup === positionGroup).length;
+    const currentCount = squadPlayers.filter(p => p.positionGroup === positionGroup).length;
     return currentCount >= capacity;
   };
 

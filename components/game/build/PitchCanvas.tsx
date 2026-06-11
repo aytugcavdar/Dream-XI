@@ -204,6 +204,12 @@ export default function PitchCanvas({
                   <span className="absolute inset-0 rounded-full border border-emerald-400 animate-ping opacity-25" />
                 )}
 
+                {hasPlayer && !selectedPlayerForAssignment && (
+                  <span className="absolute -bottom-1 -left-1 h-5 w-5 rounded-full border border-red-900/70 bg-red-950/90 text-red-300 flex items-center justify-center opacity-80">
+                    <Trash2 className="h-3 w-3" />
+                  </span>
+                )}
+
                 {/* Flag / Center visual element */}
                 <span className="text-xl leading-none mt-1 select-none filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                   {hasPlayer ? (playerTeam?.flag || '👤') : isCompatible ? '🎯' : '➕'}

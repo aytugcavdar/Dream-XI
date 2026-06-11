@@ -87,9 +87,31 @@ export interface PlayerMatchStats {
   goals: number;
   assists: number;
   xG: number;
+  shots?: number;
+  shotsOnTarget?: number;
+  keyPasses?: number;
   passAccuracy: number;
   interceptions: number;
+  tackles?: number;
+  saves?: number;
+  goalsPrevented?: number;
   rating: number;
+}
+
+export interface MatchEvent {
+  id: string;
+  minute: number;
+  team: 'user' | 'opponent' | 'system';
+  type: 'kickoff' | 'chance' | 'shot' | 'save' | 'block' | 'goal' | 'card' | 'penalty' | 'full-time';
+  playerId?: string;
+  playerName?: string;
+  assistPlayerId?: string;
+  assistPlayerName?: string;
+  opponentName?: string;
+  description: string;
+  xG?: number;
+  score?: string;
+  outcome?: 'goal' | 'saved' | 'blocked' | 'missed' | 'won' | 'lost';
 }
 
 export interface MatchResult {
@@ -99,9 +121,15 @@ export interface MatchResult {
   opponentStrength: number;
   teamGoals: number;
   opponentGoals: number;
+  teamXG?: number;
+  opponentXG?: number;
+  possession?: number;
   won: boolean;
   playerStats: PlayerMatchStats[];
-  motm: string; // Player ID of Man of the Match
+  motm: string; // Backward-compatible Man of the Match name
+  motmPlayerId?: string;
+  motmPlayerName?: string;
+  events?: MatchEvent[];
 }
 
 export interface PlayerSeasonStats {

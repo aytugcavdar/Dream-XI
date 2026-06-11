@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Player, NationalTeam, SimulationResult, MatchResult } from '@/types';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Player, NationalTeam, SimulationResult, MatchResult, MatchEvent } from '@/types';
 import { Play, SkipForward, ArrowRight, Trophy, AlertCircle, Shield, Award, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -275,40 +275,39 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     return result.matches[currentMatchIdx];
   }, [result.matches, currentMatchIdx]);
 
-  // Determine active players who scored in this match
-  const matchGoalScorers = useMemo(() => {
-    if (!activeMatch) return [];
-    return activeMatch.playerStats.filter(p => p.goals > 0);
+  const activeEvents = useMemo(() => {
+    return [...(activeMatch?.events || [])].sort((a, b) => a.minute - b.minute);
   }, [activeMatch]);
 
-  // Pre-calculate at what minutes goals happen so they map beautifully to the commentary
-  // Uses deterministic formulas to stay completely PURE for React memo render cycles.
-  const goalMinutes = useMemo(() => {
-    if (!activeMatch) return { ourTimes: [], opponentTimes: [] };
-    
-    // Distribute ourGoals deterministically using player key hashes
-    const ourTimes: { min: number; scorer: string }[] = [];
-    const scorersPool = [...matchGoalScorers];
-    
-    for (let i = 0; i < activeMatch.teamGoals; i++) {
-      const charCodeSum = scorersPool[i % scorersPool.length]?.playerName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 10) || 45;
-      const min = ((i * 31 + charCodeSum) % 75) + 8;
-      const scorer = scorersPool[i % scorersPool.length]?.playerName || 'Squad Pro';
-      ourTimes.push({ min, scorer });
+  const formatEventLog = useCallback((event: MatchEvent) => {
+    const minute = event.minute === 0 ? 'KO' : `${event.minute}'`;
+    const xgText = typeof event.xG === 'number' ? ` xG ${event.xG.toFixed(2)}` : '';
+    if (event.type === 'goal' && event.team === 'user') {
+      return `GOAL ${minute}: ${team.flag} ${event.description}${xgText}`;
     }
-    ourTimes.sort((a, b) => a.min - b.min);
-
-    // Distribute opponent goals deterministically
-    const opponentTimes: { min: number }[] = [];
-    for (let i = 0; i < activeMatch.opponentGoals; i++) {
-      const nameLength = activeMatch.opponentName.length;
-      const min = ((i * 41 + nameLength * 7) % 75) + 12;
-      opponentTimes.push({ min });
+    if (event.type === 'goal' && event.team === 'opponent') {
+      return `GOAL ${minute}: ${activeMatch.opponentFlag} ${event.description}${xgText}`;
     }
-    opponentTimes.sort((a, b) => a.min - b.min);
+    if (event.type === 'penalty') {
+      return `${event.outcome === 'won' ? 'WIN' : 'LOSS'} ${minute}: ${event.description}`;
+    }
+    if (event.type === 'full-time') {
+      return `FT ${minute}: ${event.description}`;
+    }
+    return `${minute}: ${event.description}${xgText}`;
+  }, [activeMatch.opponentFlag, team.flag]);
 
-    return { ourTimes, opponentTimes };
-  }, [activeMatch, matchGoalScorers]);
+  const getGoalsUntil = useCallback((minute: number) => {
+    const goalEvents = activeEvents.filter(event => event.type === 'goal' && event.minute <= minute);
+    return {
+      our: goalEvents.filter(event => event.team === 'user').length,
+      opponent: goalEvents.filter(event => event.team === 'opponent').length,
+    };
+  }, [activeEvents]);
+
+  const goalMinutes = useMemo((): { ourTimes: { min: number; scorer: string }[]; opponentTimes: { min: number }[] } => {
+    return { ourTimes: [], opponentTimes: [] };
+  }, []);
 
   // Auto scroll commentary ticker to bottom
   useEffect(() => {
@@ -326,6 +325,10 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
       isMounted ? t('sim_welcome') : `🏟️ Welcome to Match Day! The pitch is loaded.`,
       isMounted ? t('sim_kickoff_imminent') : `📢 Kick-off is imminent. Let's conquer the grid!`
     ]);
+    setTickerEvents(prev => [
+      ...prev,
+      ...activeEvents.filter(event => event.minute === 0).map(formatEventLog),
+    ]);
     setMatchStage('PLAYING');
   };
 
@@ -333,9 +336,10 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
   const handleFastForwardMatch = () => {
     setCurrentOurGoals(activeMatch.teamGoals);
     setCurrentOpponentGoals(activeMatch.opponentGoals);
-    setMatchMinute(90);
+    setMatchMinute(activeEvents.some(event => event.minute > 90) ? 120 : 90);
     
     const finalLogs = [
+      ...activeEvents.filter(event => event.minute > matchMinute).map(formatEventLog),
       isMounted ? t('sim_min_90_whistle') : `⏱️ Min 90: Referee blows the final whistle here!`,
       isMounted 
         ? t('sim_scoreline_matches').replace('{our}', String(activeMatch.teamGoals)).replace('{opp}', String(activeMatch.opponentGoals))
@@ -363,6 +367,33 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     if (matchStage !== 'PLAYING') return;
 
     const interval = setTimeout(() => {
+      const matchEndMinute = activeEvents.some(event => event.minute > 90) ? 120 : 90;
+
+      if (matchMinute >= matchEndMinute) {
+        setTickerEvents(prev => [
+          ...prev,
+          activeMatch.won
+            ? `WIN: ${team.flag} ${team.name} advances from ${activeMatch.round}.`
+            : `LOSS: ${team.name} is eliminated by ${activeMatch.opponentName}.`,
+        ]);
+        setMatchStage(activeMatch.won ? 'POST_MATCH' : 'ELIMINATED');
+        return;
+      }
+
+      const nextEventMinute = Math.min(matchMinute + 15, matchEndMinute);
+      setMatchMinute(nextEventMinute);
+
+      const goals = getGoalsUntil(nextEventMinute);
+      const eventsThisBlock = activeEvents.filter(event => event.minute > matchMinute && event.minute <= nextEventMinute);
+      const logs = eventsThisBlock.length > 0
+        ? eventsThisBlock.map(formatEventLog)
+        : [`${nextEventMinute}': ${isMounted && isTr ? 'Orta saha dengesi korunuyor, iki ekip de pozisyon arıyor.' : 'The midfield balance holds as both teams probe for space.'}`];
+
+      setCurrentOurGoals(goals.our);
+      setCurrentOpponentGoals(goals.opponent);
+      setTickerEvents(prev => [...prev, ...logs]);
+      return;
+
       if (matchMinute >= 90) {
         // Handle tie breakers
         const isDraw = activeMatch.teamGoals === activeMatch.opponentGoals;
@@ -405,7 +436,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
         const iconicAction = getPlayerIconicAction(scorer, nextMin, isTr);
         if (iconicAction) {
           logSnippet = isMounted 
-            ? t('sim_our_goal_iconic').replace('{min}', String(ourScorersThisBlock[0].min)).replace('{flag}', team.flag).replace('{team}', team.name).replace('{scorer}', scorer).replace('{action}', iconicAction)
+            ? t('sim_our_goal_iconic').replace('{min}', String(ourScorersThisBlock[0].min)).replace('{flag}', team.flag).replace('{team}', team.name).replace('{scorer}', scorer).replace('{action}', iconicAction || '')
             : `⚽ Min ${ourScorersThisBlock[0].min}: GOOOOOAL! ${team.flag} ${team.name} strikes! ${scorer} ${iconicAction}`;
         } else {
           logSnippet = isMounted
@@ -444,7 +475,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
     }, simPlaySpeed);
 
     return () => clearTimeout(interval);
-  }, [matchStage, matchMinute, activeMatch, goalMinutes, team, simPlaySpeed, isTr, isMounted, t]);
+  }, [matchStage, matchMinute, activeMatch, activeEvents, team, simPlaySpeed, isTr, isMounted, t, formatEventLog, getGoalsUntil, goalMinutes.ourTimes, goalMinutes.opponentTimes]);
 
   // Proceed to the next knockout round
   const handleNextMatchStep = () => {

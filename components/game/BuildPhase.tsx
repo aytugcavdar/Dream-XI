@@ -74,6 +74,9 @@ export default function BuildPhase({
   // Formation Change Warning State
   const [pendingFormationId, setPendingFormationId] = useState<string | null>(null);
 
+  // Chemistry detailed breakdown popover visible
+  const [showChemDetails, setShowChemDetails] = useState(false);
+
   // Derive squad counts and ratings
   const squadPlayers = useMemo(() => {
     return Object.values(squad).filter((p): p is Player => p !== null);
@@ -388,7 +391,14 @@ export default function BuildPhase({
       preferredPositions: preferredPositionsCount,
       countryCore: countryCoreTeam && maxCountryCount > 1 ? { team: countryCoreTeam, count: maxCountryCount } : null,
       eraCore: topYear && maxYearCount > 1 ? { year: topYear, count: maxYearCount } : null,
-      activePartnerships
+      activePartnerships,
+      details: {
+        positionBonus,
+        countryLinkBonus,
+        eraLinkBonus,
+        basePoints,
+        partnershipBonus
+      }
     };
   }, [squad, squadPlayers, activeFormation]);
 
@@ -651,13 +661,79 @@ export default function BuildPhase({
               </span>
             </div>
             <div className="h-6 w-px bg-zinc-850" />
-            <div className="flex flex-col">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">
-                {isMounted ? t('build_chemistry_label') : 'Chemistry'}
-              </span>
+            <div className="flex flex-col relative">
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500 leading-none">
+                  {isMounted ? t('build_chemistry_label') : 'Chemistry'}
+                </span>
+                <button
+                  id="chemistry-info-popover-btn"
+                  onClick={() => {
+                    playSound('select');
+                    setShowChemDetails(!showChemDetails);
+                  }}
+                  className="p-0.5 hover:bg-zinc-800 rounded text-zinc-550 hover:text-[#e8ff3b] transition-all cursor-pointer flex-shrink-0"
+                  title="Chemistry Breakdown"
+                >
+                  <span className="text-[9px] leading-none">ℹ️</span>
+                </button>
+              </div>
               <span className="font-display font-black text-xl text-emerald-400">
                 {chemistryBreakdown.chemistry}<span className="text-[#e8ff3b] font-light text-xs">%</span>
               </span>
+
+              {/* Chemistry details popover */}
+              {showChemDetails && (
+                <div className="absolute top-12 left-1/2 -translate-x-1/2 w-64 bg-zinc-950/95 border border-zinc-900 rounded-xl p-4 shadow-2xl z-50 font-mono text-[10px] space-y-2.5 backdrop-blur-md animate-fade-in text-left">
+                  <div className="flex justify-between items-center border-b border-zinc-900 pb-1.5">
+                    <span className="text-[#e8ff3b] font-bold uppercase tracking-wider">
+                      {isMounted ? t('chem_popover_title') : 'Chemistry Breakdown'}
+                    </span>
+                    <button onClick={() => setShowChemDetails(false)} className="text-zinc-550 hover:text-white p-0.5 hover:bg-zinc-900 rounded">✕</button>
+                  </div>
+                  <div className="space-y-1.5 text-zinc-400">
+                    <div className="flex justify-between">
+                      <span className="truncate mr-2">{isMounted ? t('chem_base_pts') : 'Base Points (3 pts / player)'}:</span>
+                      <span className="text-zinc-100 font-bold shrink-0">+{chemistryBreakdown.details?.basePoints || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="truncate mr-2">{isMounted ? t('chem_pos_matches') : 'Position matches (perfect role)'}:</span>
+                      <span className="text-zinc-100 font-bold shrink-0">+{chemistryBreakdown.details?.positionBonus || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="truncate mr-2">{isMounted ? t('chem_nat_links') : 'Nationality links (same country)'}:</span>
+                      <span className="text-zinc-100 font-bold shrink-0">+{chemistryBreakdown.details?.countryLinkBonus || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="truncate mr-2">{isMounted ? t('chem_era_links') : 'Era / Year links (same year)'}:</span>
+                      <span className="text-zinc-100 font-bold shrink-0">+{chemistryBreakdown.details?.eraLinkBonus || 0}</span>
+                    </div>
+                    {chemistryBreakdown.activePartnerships.length > 0 && (
+                      <div className="flex justify-between text-emerald-400">
+                        <span className="truncate mr-2">{isMounted ? t('chem_partnerships') : 'Legendary Partnerships'}:</span>
+                        <span className="font-bold shrink-0">+{chemistryBreakdown.details?.partnershipBonus || 0}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {chemistryBreakdown.activePartnerships.length > 0 && (
+                    <div className="border-t border-zinc-900 pt-2 space-y-1">
+                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest block font-bold">
+                        {isMounted ? t('chem_active_duos') : 'Active Duos'}:
+                      </span>
+                      {chemistryBreakdown.activePartnerships.map((p, pIdx) => (
+                        <div key={pIdx} className="text-[9px] text-[#e8ff3b] truncate" title={p.desc}>
+                          🤝 {p.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="text-[9px] text-zinc-500 pt-1 text-center italic border-t border-zinc-900">
+                    {isMounted ? t('chem_capped') : 'Capped at max 100%'}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

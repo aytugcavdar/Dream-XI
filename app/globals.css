@@ -79,3 +79,21 @@ body {
 .glow-lime {
   filter: drop-shadow(0 0 8px rgba(232, 255, 59, 0.35));
 }
+
+@keyframes standings-glow-green {
+  0%, 100% { background-color: transparent; }
+  20%, 80% { background-color: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); }
+}
+
+@keyframes standings-glow-red {
+  0%, 100% { background-color: transparent; }
+  20%, 80% { background-color: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
+}
+
+.animate-glow-green {
+  animation: standings-glow-green 1.5s ease-out;
+}
+
+.animate-glow-red {
+  animation: standings-glow-red 1.5s ease-out;
+}

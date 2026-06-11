@@ -15,40 +15,42 @@ interface LiveSimPanelProps {
 
 // Set of atmospheric generic commentary lines in English
 const COMMENTARY_MIDFIELD_EN = [
-  "fights for possession in the center circle.",
-  "orchestrates a series of neat short plays.",
-  "finds space on the flank and curls a direct ball.",
+  "fights for possession with classic black leather boots in the center circle.",
+  "orchestrates a series of neat short plays, reminiscent of classic World Cup tournaments.",
+  "finds space on the flank and curls a direct ball into the penalty area.",
   "intercepts a critical pass, breaking the opponent counter-attack.",
-  "sprays a majestic 40-yard diagonal pass into the box.",
-  "is fouled from behind, sparking warnings from the referee.",
-  "pulls off classic trickery to escape two defenders."
+  "sprays a majestic 40-yard diagonal pass using the hand-stitched leather match ball.",
+  "is fouled from behind, sparking warning calls from the referee.",
+  "pulls off classic trickery to escape two defenders with elegant, retro flair.",
+  "challenges with a hard-nosed, old-school tackle, keeping the game clean but tough."
 ];
 
 const COMMENTARY_DEFENSE_EN = [
-  "makes a massive sliding clearance inside the 18-yard box.",
-  "organizes the backline to capture the offside trap.",
-  "comfortably collects an incoming long-range ball.",
-  "leaps high to shield away a dangerous corner kick.",
-  "stands tall to block a heavy drive from the opponent striker."
+  "makes a massive sliding clearance inside the 18-yard box, getting mud on his classic white jersey.",
+  "organizes the backline like a sweeper from the 70s to capture the offside trap.",
+  "comfortably collects an incoming long-range ball with leather gloves.",
+  "leaps high to shield away a dangerous corner kick with a powerful header.",
+  "stands tall to block a heavy drive from the opponent striker, showing classic defensive grit."
 ];
 
 // Set of atmospheric generic commentary lines in Turkish
 const COMMENTARY_MIDFIELD_TR = [
-  "orta yuvarlakta top kapma mücadelesi veriyor.",
-  "bir dizi kısa ve organizes pasla oyunu kuruyor.",
-  "kanatta boşluk bulup ceza sahasına ortalıyor.",
+  "orta yuvarlakta klasik siyah deri kramponlarıyla top kapma mücadelesi veriyor.",
+  "eski Dünya Kupalarını andıran, kısa ve organizes paslarla oyunu kuruyor.",
+  "kanatta boşluk bulup ceza sahasına kavisli bir orta gönderiyor.",
   "kritik bir pası keserek rakip kontratağı önlüyor.",
-  "ceza sahasına 40 metrelik muazzam bir çapraz pas gönderiyor.",
-  "arkadan faulle durduruluyor, hakem oyuncuyu uyarıyor.",
-  "klas bir çalımla iki savunmacıdan sıyrılıyor."
+  "el dikişli deri topla ceza sahasına 40 metrelik muazzam bir çapraz pas fırlatıyor.",
+  "arkadan sert bir faulle durduruluyor, hakem kartını işaret ederek sert bir uyarı yapıyor.",
+  "zarif bir vücut çalımıyla iki savunmacıyı adeta 70'ler klasiğiyle oyundan düşürüyor.",
+  "sert ama temiz bir eski usul müdahaleyle topu takımına kazandırıyor."
 ];
 
 const COMMENTARY_DEFENSE_TR = [
-  "ceza sahası içinde yatarak kritik bir müdahaleyle topu uzaklaştırıyor.",
-  "defans hattını organize ederek rakibi ofsayt tuzağına düşürüyor.",
-  "gelen uzun topu rahatça kontrol ediyor.",
-  "tehlikeli bir köşe vuruşunda yükselip topu uzaklaştırıyor.",
-  "rakip forvetin sert şutunu gövdesiyle bloke ediyor."
+  "çamurlu sahada yatarak yaptığı kritik müdahaleyle formasını kirletmek pahasına tehlikeyi uzaklaştırıyor!",
+  "arka hattı 70'lerin klasik 'libero' tarzıyla yöneterek rakibi ofsayt tuzağına düşürüyor.",
+  "gelen uzun topu deri kaleci eldivenleriyle rahatça kontrol ediyor.",
+  "tehlikeli bir köşe vuruşunda adeta yerçekimine meydan okuyarak yükselip kafayla vuruyor.",
+  "gövdesini siper ederek eski usul bir savunma direnciyle rakip forvetin şutunu bloke ediyor!"
 ];
 
 // Resolve efsanevi (legendary) moves for our selected super-icons in English or Turkish
@@ -272,6 +274,9 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
   const [matchStage, setMatchStage] = useState<'PRE_MATCH' | 'PLAYING' | 'POST_MATCH' | 'ELIMINATED' | 'CHAMPION_TRANS'>('PRE_MATCH');
 
   const tickerRef = useRef<HTMLDivElement>(null);
+  
+  // Track previous standings indexes to trigger glow alerts on rank shifts
+  const prevPositionsRef = useRef<Record<string, number>>({});
 
   const activeMatch: MatchResult = useMemo(() => {
     return result.matches[currentMatchIdx];
@@ -357,6 +362,14 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
       return b.goalsFor - a.goalsFor;
     });
   }, [groupActive, activeMatch, matchStage]);
+
+  useEffect(() => {
+    const positionsMap: Record<string, number> = {};
+    currentStandings.forEach((s: any, idx: number) => {
+      positionsMap[s.teamId] = idx;
+    });
+    prevPositionsRef.current = positionsMap;
+  }, [currentStandings]);
 
   const activeEvents = useMemo(() => {
     return [...(activeMatch?.events || [])].sort((a, b) => a.minute - b.minute);
@@ -719,12 +732,14 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                 const isGoal = evt.includes('GOAL') || evt.includes('strikes') || evt.includes('GOOOOOL') || evt.includes('GOOOOOAL');
                 const isWin = evt.includes('WIN') || evt.includes('KAZANDIK') || evt.includes('advances') || evt.includes('passes');
                 const isLoss = evt.includes('LOSS') || evt.includes('ELENDİK') || evt.includes('eliminated') || evt.includes('contain');
+                const isWarning = evt.includes('⚠️') || evt.includes('card') || evt.includes('yellow') || evt.includes('red') || evt.includes('faulle') || evt.includes('warning');
                 const isSystem = evt.startsWith('🏟️') || evt.startsWith('📢') || evt.includes('⏱️') || evt.includes('🏁') || evt.includes('KO:') || evt.includes('FT:');
 
                 let textClass = 'text-zinc-450';
                 if (isGoal) textClass = 'text-[#e8ff3b] font-black border-l-2 border-[#e8ff3b] pl-2 bg-zinc-900/40 py-1 rounded';
                 else if (isWin) textClass = 'text-emerald-400 font-bold bg-emerald-950/20 p-2 border border-emerald-900/30 rounded';
                 else if (isLoss) textClass = 'text-red-400 font-bold bg-red-950/20 p-2 border border-red-900/30 rounded';
+                else if (isWarning) textClass = 'text-yellow-400 font-medium pl-2 border-l border-yellow-500/40 py-0.5 bg-yellow-950/5';
                 else if (isSystem) textClass = 'text-zinc-550 italic';
 
                 return (
@@ -759,47 +774,61 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
                 })}
               </div>
             </div>
-            <table className="w-full text-left font-mono text-[10px] mt-1">
-              <thead>
-                <tr className="text-zinc-550 border-b border-zinc-900 pb-1.5 text-[8px] uppercase tracking-wider">
-                  <th className="pb-1.5 font-bold">{isMounted ? t('sim_table_team') : 'TEAM'}</th>
-                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_played') : 'P'}</th>
-                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_won') : 'W'}</th>
-                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_drawn') : 'D'}</th>
-                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_lost') : 'L'}</th>
-                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_goals') : 'GF-GA'}</th>
-                  <th className="pb-1.5 text-center font-bold">{isMounted ? t('sim_table_difference') : 'GD'}</th>
-                  <th className="pb-1.5 text-right font-bold">{isMounted ? t('sim_table_points') : 'PTS'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-900">
+            <div className="w-full text-left font-mono text-[10px] mt-1 select-none flex flex-col">
+              {/* Header row */}
+              <div className="text-zinc-550 border-b border-zinc-900 pb-1.5 text-[8px] uppercase tracking-wider flex items-center font-bold">
+                <div className="flex-1 min-w-[100px]">{isMounted ? t('sim_table_team') : 'TEAM'}</div>
+                <div className="w-8 text-center">{isMounted ? t('sim_table_played') : 'P'}</div>
+                <div className="w-8 text-center">{isMounted ? t('sim_table_won') : 'W'}</div>
+                <div className="w-8 text-center">{isMounted ? t('sim_table_drawn') : 'D'}</div>
+                <div className="w-8 text-center">{isMounted ? t('sim_table_lost') : 'L'}</div>
+                <div className="w-16 text-center">{isMounted ? t('sim_table_goals') : 'GF-GA'}</div>
+                <div className="w-8 text-center">{isMounted ? t('sim_table_difference') : 'GD'}</div>
+                <div className="w-10 text-right">{isMounted ? t('sim_table_points') : 'PTS'}</div>
+              </div>
+              
+              {/* Standings Rows */}
+              <div className="divide-y divide-zinc-900/40 flex flex-col">
                 {currentStandings.map((standing: any, index: number) => {
                   const isUser = standing.teamId === team.id;
                   const isQualifying = index < 2;
+
+                  const prevPos = prevPositionsRef.current[standing.teamId];
+                  let glowClass = "";
+                  if (prevPos !== undefined) {
+                    if (index < prevPos) {
+                      glowClass = "animate-glow-green border-emerald-500/30";
+                    } else if (index > prevPos) {
+                      glowClass = "animate-glow-red border-red-500/30";
+                    }
+                  }
+
                   return (
-                    <tr 
+                    <motion.div 
+                      layout
+                      transition={{ type: 'spring', stiffness: 350, damping: 35 }}
                       key={standing.teamId} 
-                      className={`border-b border-zinc-900/50 ${isUser ? 'text-[#e8ff3b] font-bold bg-[#e8ff3b]/5' : 'text-zinc-350'}`}
+                      className={`border-b border-zinc-900/50 flex items-center py-2 transition-all duration-300 ${isUser ? 'text-[#e8ff3b] font-bold bg-[#e8ff3b]/5' : 'text-zinc-350'} ${glowClass}`}
                     >
-                      <td className="py-2 flex items-center gap-1 min-w-[100px] truncate">
+                      <div className="flex-1 flex items-center gap-1 min-w-[100px] truncate">
                         <span className={`w-1 h-1 rounded-full flex-shrink-0 ${isQualifying ? 'bg-emerald-500' : 'bg-red-500'}`} />
                         <span className="text-sm leading-none flex-shrink-0">{standing.teamFlag}</span>
                         <span className="truncate max-w-[80px] sm:max-w-none">{standing.teamName}</span>
-                      </td>
-                      <td className="py-2 text-center">{standing.played}</td>
-                      <td className="py-2 text-center">{standing.won}</td>
-                      <td className="py-2 text-center">{standing.drawn}</td>
-                      <td className="py-2 text-center">{standing.lost}</td>
-                      <td className="py-2 text-center text-zinc-500">{standing.goalsFor}-{standing.goalsAgainst}</td>
-                      <td className={`py-2 text-center font-semibold ${standing.goalDifference > 0 ? 'text-emerald-400' : standing.goalDifference < 0 ? 'text-red-400' : 'text-zinc-550'}`}>
+                      </div>
+                      <div className="w-8 text-center">{standing.played}</div>
+                      <div className="w-8 text-center">{standing.won}</div>
+                      <div className="w-8 text-center">{standing.drawn}</div>
+                      <div className="w-8 text-center">{standing.lost}</div>
+                      <div className="w-16 text-center text-zinc-500">{standing.goalsFor}-{standing.goalsAgainst}</div>
+                      <div className={`w-8 text-center font-semibold ${standing.goalDifference > 0 ? 'text-emerald-400' : standing.goalDifference < 0 ? 'text-red-400' : 'text-zinc-550'}`}>
                         {standing.goalDifference > 0 ? `+${standing.goalDifference}` : standing.goalDifference}
-                      </td>
-                      <td className="py-2 text-right font-bold text-zinc-100">{standing.points}</td>
-                    </tr>
+                      </div>
+                      <div className="w-10 text-right font-bold text-zinc-100">{standing.points}</div>
+                    </motion.div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         )}
 

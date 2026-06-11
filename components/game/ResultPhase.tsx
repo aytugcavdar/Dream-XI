@@ -597,44 +597,71 @@ export default function ResultPhase({
               {activeStatsTab === 'scorers' && result.tournamentStats && (result.tournamentStats.topScorers || []).map((statsRow, idx) => {
                 const isUserPlayer = Object.values(squad).some(p => p !== null && p.id === statsRow.playerId);
                 
+                // Styling configurations based on rank
+                let bgStyle = 'bg-zinc-900/30 border-zinc-900';
+                let rankBadge = <span className="font-mono text-[10px] text-zinc-550 font-black min-w-[15px] text-center">{idx + 1}</span>;
+                let pillStyle = 'bg-zinc-900 border border-zinc-850 text-zinc-400 font-semibold px-2 py-0.5 rounded-full';
+                let cardHeight = 'p-2';
+                let isTopScorerBanner = idx === 0;
+
+                if (idx === 0) {
+                  bgStyle = 'bg-gradient-to-r from-amber-500/15 via-[#e8ff3b]/10 to-amber-500/15 border-amber-500/40 ring-1 ring-amber-500/10 shadow-[0_0_20px_rgba(232,255,59,0.05)]';
+                  rankBadge = <span className="text-xl leading-none" title="Golden Boot Winner">🥇</span>;
+                  pillStyle = 'bg-[#e8ff3b] text-black border border-[#e8ff3b] font-black px-3 py-1 rounded-full shadow-md text-xs';
+                  cardHeight = 'p-3.5';
+                } else if (idx === 1) {
+                  bgStyle = 'bg-gradient-to-r from-zinc-800/20 via-zinc-700/10 to-zinc-800/20 border-zinc-500/30';
+                  rankBadge = <span className="text-lg leading-none" title="Silver Boot">🥈</span>;
+                  pillStyle = 'bg-zinc-850 text-zinc-200 border border-zinc-700/40 font-bold px-2 py-0.5 rounded-full';
+                } else if (idx === 2) {
+                  bgStyle = 'bg-gradient-to-r from-amber-900/10 via-amber-800/5 to-amber-900/10 border-amber-700/30';
+                  rankBadge = <span className="text-lg leading-none" title="Bronze Boot">🥉</span>;
+                  pillStyle = 'bg-amber-950/20 text-amber-400 border border-amber-800/30 font-bold px-2 py-0.5 rounded-full';
+                } else if (isUserPlayer) {
+                  bgStyle = 'bg-[#e8ff3b]/5 border-[#e8ff3b]/25 shadow-[0_0_15px_rgba(232,255,59,0.03)]';
+                }
+
                 return (
                   <div 
                     key={statsRow.playerId}
-                    className={`p-2 rounded-xl border flex items-center justify-between gap-4 ${
-                      isUserPlayer 
-                        ? 'bg-[#e8ff3b]/5 border-[#e8ff3b]/25 shadow-[0_0_15px_rgba(232,255,59,0.03)]' 
-                        : 'bg-zinc-900/30 border-zinc-900'
-                    }`}
+                    className={`rounded-xl border flex items-center justify-between gap-4 transition-all duration-300 ${cardHeight} ${bgStyle}`}
                   >
                     {/* Pos Label and Identity */}
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className="font-mono text-[10px] text-zinc-500 font-black min-w-[15px] text-center">
-                        {idx + 1}
-                      </span>
+                      <div className="flex-shrink-0 flex items-center justify-center min-w-[20px]">
+                        {rankBadge}
+                      </div>
                       <span className={`text-[9px] font-mono font-bold uppercase py-0.5 px-1.5 rounded border ${getPositionStyle(getPositionGroup(statsRow.position))} flex-shrink-0`}>
                         {statsRow.position}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="font-sans font-bold text-xs text-zinc-200 truncate flex items-center gap-1">
+                        <div className={`font-sans font-bold text-zinc-200 truncate flex items-center gap-1 ${isTopScorerBanner ? 'text-sm' : 'text-xs'}`}>
                           <span>{statsRow.playerName}</span>
                           {isUserPlayer && <Trophy className="w-3 h-3 text-[#e8ff3b] inline" />}
                         </div>
                         <div className="font-mono text-[9px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
                           <span className="text-xs select-none leading-none">{statsRow.teamFlag}</span>
                           <span className="truncate">{statsRow.teamName}</span>
+                          {isTopScorerBanner && (
+                            <span className="text-[8px] bg-amber-500/10 text-amber-500 px-1 py-0.5 rounded font-bold uppercase tracking-wider scale-90 -ml-0.5">
+                              {isMounted ? (language === 'en' ? 'Golden Boot' : 'Altın Ayakkabı') : 'Golden Boot'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Stats Rows */}
                     <div className="flex items-center gap-3 font-mono text-[10px] text-zinc-400 pl-2">
-                      <div className="w-16 py-0.5 px-2 bg-[#e8ff3b]/10 text-[#e8ff3b] border border-[#e8ff3b]/20 rounded-full text-center font-extrabold text-[10px]">
-                        {statsRow.goals} {isMounted ? (language === 'en' ? 'Goals' : 'Gol') : 'Goals'}
+                      <div className={`${isTopScorerBanner ? 'w-24' : 'w-16'} text-center flex justify-center`}>
+                        <div className={`${pillStyle}`}>
+                          {statsRow.goals} {isMounted ? (language === 'en' ? 'Goals' : 'Gol') : 'Goals'}
+                        </div>
                       </div>
                       <div className="w-12 text-center text-zinc-550">
                         {statsRow.assists} {isMounted ? (language === 'en' ? 'Ast' : 'Ast') : 'Ast'}
                       </div>
-                      <div className="w-12 py-1 border border-zinc-850 bg-zinc-900/40 rounded text-center text-[10px] font-bold text-zinc-400">
+                      <div className={`py-1 px-1.5 border rounded text-center text-[10px] font-bold ${isTopScorerBanner ? 'border-amber-500/30 bg-amber-500/5 text-amber-400' : 'border-zinc-850 bg-zinc-900/40 text-zinc-400'}`}>
                         OVR {statsRow.playerRating}
                       </div>
 
@@ -642,7 +669,7 @@ export default function ResultPhase({
                       <button
                         id={`player-stats-info-btn-${statsRow.playerId}`}
                         onClick={() => handleOpenOpponentModal(statsRow)}
-                        className="p-1 hover:bg-zinc-800 rounded border border-zinc-850 hover:border-zinc-700 text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0"
+                        className={`p-1 hover:bg-zinc-800 rounded border text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0 ${isTopScorerBanner ? 'border-amber-500/20' : 'border-zinc-850'}`}
                       >
                         <span className="text-[10px] leading-none uppercase px-1.5 py-0.5 font-sans font-semibold">ℹ️</span>
                       </button>
@@ -654,31 +681,56 @@ export default function ResultPhase({
               {activeStatsTab === 'assisters' && result.tournamentStats && (result.tournamentStats.topAssisters || []).map((statsRow, idx) => {
                 const isUserPlayer = Object.values(squad).some(p => p !== null && p.id === statsRow.playerId);
                 
+                // Styling configurations based on rank
+                let bgStyle = 'bg-zinc-900/30 border-zinc-900';
+                let rankBadge = <span className="font-mono text-[10px] text-zinc-550 font-black min-w-[15px] text-center">{idx + 1}</span>;
+                let pillStyle = 'bg-zinc-900 border border-zinc-850 text-zinc-400 font-semibold px-2 py-0.5 rounded-full';
+                let cardHeight = 'p-2';
+                let isTopAssisterBanner = idx === 0;
+
+                if (idx === 0) {
+                  bgStyle = 'bg-gradient-to-r from-emerald-500/15 via-[#e8ff3b]/10 to-emerald-500/15 border-emerald-500/40 ring-1 ring-emerald-500/10 shadow-[0_0_20px_rgba(232,255,59,0.05)]';
+                  rankBadge = <span className="text-xl leading-none" title="Playmaking King">🥇</span>;
+                  pillStyle = 'bg-emerald-400 text-black border border-emerald-400 font-black px-3 py-1 rounded-full shadow-md text-xs';
+                  cardHeight = 'p-3.5';
+                } else if (idx === 1) {
+                  bgStyle = 'bg-gradient-to-r from-zinc-800/20 via-zinc-700/10 to-zinc-800/20 border-zinc-500/30';
+                  rankBadge = <span className="text-lg leading-none" title="Silver Assist">🥈</span>;
+                  pillStyle = 'bg-zinc-850 text-zinc-200 border border-zinc-700/40 font-bold px-2 py-0.5 rounded-full';
+                } else if (idx === 2) {
+                  bgStyle = 'bg-gradient-to-r from-amber-900/10 via-amber-800/5 to-amber-900/10 border-amber-700/30';
+                  rankBadge = <span className="text-lg leading-none" title="Bronze Assist">🥉</span>;
+                  pillStyle = 'bg-amber-950/20 text-amber-400 border border-amber-800/30 font-bold px-2 py-0.5 rounded-full';
+                } else if (isUserPlayer) {
+                  bgStyle = 'bg-[#e8ff3b]/5 border-[#e8ff3b]/25 shadow-[0_0_15px_rgba(232,255,59,0.03)]';
+                }
+
                 return (
                   <div 
                     key={statsRow.playerId}
-                    className={`p-2 rounded-xl border flex items-center justify-between gap-4 ${
-                      isUserPlayer 
-                        ? 'bg-[#e8ff3b]/5 border-[#e8ff3b]/25 shadow-[0_0_15px_rgba(232,255,59,0.03)]' 
-                        : 'bg-zinc-900/30 border-zinc-900'
-                    }`}
+                    className={`rounded-xl border flex items-center justify-between gap-4 transition-all duration-300 ${cardHeight} ${bgStyle}`}
                   >
                     {/* Pos Label and Identity */}
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className="font-mono text-[10px] text-zinc-500 font-black min-w-[15px] text-center">
-                        {idx + 1}
-                      </span>
+                      <div className="flex-shrink-0 flex items-center justify-center min-w-[20px]">
+                        {rankBadge}
+                      </div>
                       <span className={`text-[9px] font-mono font-bold uppercase py-0.5 px-1.5 rounded border ${getPositionStyle(getPositionGroup(statsRow.position))} flex-shrink-0`}>
                         {statsRow.position}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="font-sans font-bold text-xs text-zinc-200 truncate flex items-center gap-1">
+                        <div className={`font-sans font-bold text-zinc-200 truncate flex items-center gap-1 ${isTopAssisterBanner ? 'text-sm' : 'text-xs'}`}>
                           <span>{statsRow.playerName}</span>
                           {isUserPlayer && <Trophy className="w-3 h-3 text-[#e8ff3b] inline" />}
                         </div>
                         <div className="font-mono text-[9px] text-zinc-500 flex items-center gap-1.5 mt-0.5">
                           <span className="text-xs select-none leading-none">{statsRow.teamFlag}</span>
                           <span className="truncate">{statsRow.teamName}</span>
+                          {isTopAssisterBanner && (
+                            <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 py-0.5 rounded font-bold uppercase tracking-wider scale-90 -ml-0.5">
+                              {isMounted ? (language === 'en' ? 'Playmaker King' : 'Asist Kralı') : 'Playmaker King'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -688,10 +740,12 @@ export default function ResultPhase({
                       <div className="w-12 text-center text-zinc-550">
                         {statsRow.goals} {isMounted ? (language === 'en' ? 'Gls' : 'Gol') : 'Gls'}
                       </div>
-                      <div className="w-18 py-0.5 px-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-center font-extrabold text-[10px]">
-                        {statsRow.assists} {isMounted ? (language === 'en' ? 'Assists' : 'Asist') : 'Assists'}
+                      <div className={`${isTopAssisterBanner ? 'w-24' : 'w-18'} text-center flex justify-center`}>
+                        <div className={`${pillStyle}`}>
+                          {statsRow.assists} {isMounted ? (language === 'en' ? 'Assists' : 'Asist') : 'Assists'}
+                        </div>
                       </div>
-                      <div className="w-12 py-1 border border-zinc-850 bg-zinc-900/40 rounded text-center text-[10px] font-bold text-zinc-400">
+                      <div className={`py-1 px-1.5 border rounded text-center text-[10px] font-bold ${isTopAssisterBanner ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' : 'border-zinc-850 bg-zinc-900/40 text-zinc-400'}`}>
                         OVR {statsRow.playerRating}
                       </div>
 
@@ -699,7 +753,7 @@ export default function ResultPhase({
                       <button
                         id={`player-stats-info-btn-${statsRow.playerId}`}
                         onClick={() => handleOpenOpponentModal(statsRow)}
-                        className="p-1 hover:bg-zinc-800 rounded border border-zinc-850 hover:border-zinc-700 text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0"
+                        className={`p-1 hover:bg-zinc-800 rounded border text-zinc-500 hover:text-[#e8ff3b] transition-all flex-shrink-0 ${isTopAssisterBanner ? 'border-emerald-500/20' : 'border-zinc-850'}`}
                       >
                         <span className="text-[10px] leading-none uppercase px-1.5 py-0.5 font-sans font-semibold">ℹ️</span>
                       </button>

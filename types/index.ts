@@ -186,6 +186,17 @@ export interface TournamentPlayerStat {
   assists: number;
 }
 
+export interface KnockoutMatch {
+  round: 'Quarter-Finals' | 'Semi-Finals' | 'Final';
+  homeTeam: NationalTeam;
+  awayTeam: NationalTeam;
+  homeGoals: number;
+  awayGoals: number;
+  homePenalties?: number;
+  awayPenalties?: number;
+  winnerId: string;
+}
+
 export interface SimulationResult {
   won: boolean; // Did they win the final?
   finalScore: string; // e.g., "3-2" or "1-2" depending on where they exited
@@ -209,6 +220,7 @@ export interface SimulationResult {
     topScorers: TournamentPlayerStat[];
     topAssisters: TournamentPlayerStat[];
   };
+  knockoutMatches?: KnockoutMatch[];
 }
 
 export interface GameRecord {

@@ -250,7 +250,11 @@ export const translations = {
     sim_loss_log: '💔 LOSS! Elite tactical opposition managed to contain our squads.',
     sim_our_goal: '⚽ Min {min}: GOOOOOAL! {flag} {team} strikes! {scorer} executes a flawless shot into the net!',
     sim_our_goal_iconic: '⚽ Min {min}: GOOOOOAL! {flag} {team} strikes! {scorer} {action}',
-    sim_opp_goal: '⚠️ Min {min}: GOAL! The opposition exploits our flank defense to slot home.'
+    sim_opp_goal: '⚠️ Min {min}: GOAL! The opposition exploits our flank defense to slot home.',
+    sim_tab_bracket: 'Tournament Bracket',
+    bracket_tbd: 'TBD',
+    bracket_winner_of: 'Winner of {match}',
+    result_group_exit_desc: 'Finished #{rank} in Group A with {pts} points (GD: {gd}).'
   },
   tr: {
     // Navigation
@@ -501,7 +505,11 @@ export const translations = {
     sim_loss_log: '💔 ELENDİK! Rakibin elit taktiksel oyunu kadromuzu durdurmayı başardı.',
     sim_our_goal: '⚽ Dk {min}: GOOOOOL! {flag} {team} golü buluyor! {scorer} ağlara kusursuz bir vuruş gönderiyor!',
     sim_our_goal_iconic: '⚽ Dk {min}: GOOOOOL! {flag} {team} golü buluyor! {scorer} {action}',
-    sim_opp_goal: '⚠️ Dk {min}: GOL! Rakip kanat savunmamızdaki boşluğu değerlendirerek topu ağlara yolluyor.'
+    sim_opp_goal: '⚠️ Dk {min}: GOL! Rakip kanat savunmamızdaki boşluğu değerlendirerek topu ağlara yolluyor.',
+    sim_tab_bracket: 'Eleme Ağacı',
+    bracket_tbd: 'Belli Değil',
+    bracket_winner_of: '{match} Galibi',
+    result_group_exit_desc: 'Grup A\'yı {pts} puanla #{rank}. sırada tamamladınız (Av: {gd}).'
   }
 } as const;
 

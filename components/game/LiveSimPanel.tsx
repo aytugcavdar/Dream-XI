@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Player, NationalTeam, SimulationResult, MatchResult, MatchEvent } from '@/types';
+import { Player, NationalTeam, SimulationResult, MatchResult, MatchEvent, KnockoutMatch } from '@/types';
 import { Play, SkipForward, ArrowRight, Trophy, AlertCircle, Shield, Award, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '@/components/LanguageProvider';
@@ -281,6 +281,138 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
   const activeMatch: MatchResult = useMemo(() => {
     return result.matches[currentMatchIdx];
   }, [result.matches, currentMatchIdx]);
+
+  const currentRoundLevel = useMemo(() => {
+    if (!activeMatch) return 0;
+    const r = activeMatch.round;
+    if (r.startsWith('Group')) return 0;
+    if (r === 'Quarter-Finals') return 1;
+    if (r === 'Semi-Finals') return 2;
+    if (r === 'Final') return 3;
+    return 4;
+  }, [activeMatch]);
+
+  const getMatchTeamsDisplay = (m: KnockoutMatch, idx: number) => {
+    const matchLevel = m.round === 'Quarter-Finals' ? 1 : m.round === 'Semi-Finals' ? 2 : 3;
+
+    let homeName = '';
+    let homeFlag = '🏳️';
+    let awayName = '';
+    let awayFlag = '🏳️';
+
+    const revealed = matchLevel <= currentRoundLevel;
+
+    if (revealed) {
+      homeName = m.homeTeam.name;
+      homeFlag = m.homeTeam.flag;
+      awayName = m.awayTeam.name;
+      awayFlag = m.awayTeam.flag;
+    } else {
+      if (m.round === 'Quarter-Finals') {
+        if (idx === 0) {
+          homeName = isTr ? 'A Grubu 1.' : 'Group A #1';
+          awayName = isTr ? 'B Grubu 2.' : 'Group B #2';
+        } else if (idx === 1) {
+          homeName = isTr ? 'B Grubu 1.' : 'Group B #1';
+          awayName = isTr ? 'A Grubu 2.' : 'Group A #2';
+        } else if (idx === 2) {
+          homeName = isTr ? 'C Grubu 1.' : 'Group C #1';
+          awayName = isTr ? 'D Grubu 2.' : 'Group D #2';
+        } else {
+          homeName = isTr ? 'D Grubu 1.' : 'Group D #1';
+          awayName = isTr ? 'C Grubu 2.' : 'Group C #2';
+        }
+      } else if (m.round === 'Semi-Finals') {
+        if (idx === 4) {
+          homeName = isTr ? 'ÇF1 Galibi' : 'Winner of QF1';
+          awayName = isTr ? 'ÇF3 Galibi' : 'Winner of QF3';
+        } else {
+          homeName = isTr ? 'ÇF2 Galibi' : 'Winner of QF2';
+          awayName = isTr ? 'ÇF4 Galibi' : 'Winner of QF4';
+        }
+      } else {
+        homeName = isTr ? 'YF1 Galibi' : 'Winner of SF1';
+        awayName = isTr ? 'YF2 Galibi' : 'Winner of SF2';
+      }
+    }
+
+    return { homeName, homeFlag, awayName, awayFlag, revealed };
+  };
+
+  const getMatchScoreDisplay = (m: KnockoutMatch, idx: number) => {
+    const matchLevel = m.round === 'Quarter-Finals' ? 1 : m.round === 'Semi-Finals' ? 2 : 3;
+
+    if (matchLevel > currentRoundLevel) return { score: '', isPlaying: false };
+
+    if (matchLevel === currentRoundLevel) {
+      const isUserMatch = m.homeTeam.id === team.id || m.awayTeam.id === team.id;
+      if (isUserMatch) {
+        if (matchStage === 'PRE_MATCH') {
+          return { score: '- : -', isPlaying: false };
+        }
+        if (matchStage === 'PLAYING') {
+          const userIsHome = m.homeTeam.id === team.id;
+          const homeScore = userIsHome ? currentOurGoals : currentOpponentGoals;
+          const awayScore = userIsHome ? currentOpponentGoals : currentOurGoals;
+          return { score: `${homeScore} - ${awayScore}`, isPlaying: true };
+        }
+      }
+    }
+
+    let scoreText = `${m.homeGoals} - ${m.awayGoals}`;
+    if (m.homePenalties !== undefined && m.awayPenalties !== undefined) {
+      scoreText += ` (${m.homePenalties}-${m.awayPenalties}p)`;
+    }
+    return { score: scoreText, isPlaying: false };
+  };
+
+  const renderBracketMatchBlock = (m: KnockoutMatch | undefined, idx: number) => {
+    if (!m) return null;
+
+    const { homeName, homeFlag, awayName, awayFlag, revealed } = getMatchTeamsDisplay(m, idx);
+    const { score, isPlaying } = getMatchScoreDisplay(m, idx);
+
+    const isUserMatch = m.homeTeam.id === team.id || m.awayTeam.id === team.id;
+    const isWinnerHome = revealed && m.winnerId === m.homeTeam.id;
+    const isWinnerAway = revealed && m.winnerId === m.awayTeam.id;
+
+    const isCurrent = revealed && m.round === activeMatch.round && isUserMatch && matchStage !== 'POST_MATCH' && matchStage !== 'ELIMINATED' && matchStage !== 'CHAMPION_TRANS';
+
+    let borderClass = 'border-zinc-900 bg-zinc-950/40 text-zinc-400';
+    if (isCurrent) {
+      borderClass = 'border-[#e8ff3b] bg-[#e8ff3b]/5 text-[#e8ff3b] shadow-[0_0_15px_rgba(232,255,59,0.15)]';
+    } else if (isUserMatch && revealed) {
+      const userWon = m.winnerId === team.id;
+      borderClass = userWon
+        ? 'border-emerald-500/40 bg-emerald-950/10 text-emerald-400'
+        : 'border-red-500/40 bg-red-950/10 text-red-400';
+    }
+
+    return (
+      <div key={idx} className={`p-2 sm:p-2.5 rounded-xl border text-[10px] font-mono transition-all duration-300 flex flex-col gap-1 w-full flex-shrink-0 ${borderClass}`}>
+        <div className={`flex justify-between items-center ${isWinnerHome ? 'font-bold text-white' : revealed && m.winnerId ? 'text-zinc-550 line-through' : ''}`}>
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="text-xs">{homeFlag}</span>
+            <span className="truncate max-w-[80px] sm:max-w-[100px]">{homeName}</span>
+          </div>
+          {revealed && isWinnerHome && <span className="text-[9px] text-[#e8ff3b]">✓</span>}
+        </div>
+
+        <div className="flex justify-between items-center text-[9px] text-zinc-555 border-t border-b border-zinc-900/50 py-0.5 my-0.5">
+          <span>{isPlaying ? '● LIVE' : m.round.toUpperCase()}</span>
+          <span className={`font-bold text-xs ${isPlaying ? 'text-[#e8ff3b] animate-pulse' : 'text-zinc-100'}`}>{score}</span>
+        </div>
+
+        <div className={`flex justify-between items-center ${isWinnerAway ? 'font-bold text-white' : revealed && m.winnerId ? 'text-zinc-550 line-through' : ''}`}>
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="text-xs">{awayFlag}</span>
+            <span className="truncate max-w-[80px] sm:max-w-[100px]">{awayName}</span>
+          </div>
+          {revealed && isWinnerAway && <span className="text-[9px] text-[#e8ff3b]">✓</span>}
+        </div>
+      </div>
+    );
+  };
 
   const groupActive = useMemo(() => {
     return result.groups?.[selectedGroupIdx];
@@ -818,7 +950,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
         {/* CONDITIONALLY RENDER COMMENTARY OR STANDINGS */}
         {simTab === 'commentary' ? (
           /* LIVE COMMENTARY TERMINAL TICKER */
-          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px]">
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[235px] max-h-[250px]">
             <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-2 font-mono text-[9px] text-zinc-500 uppercase tracking-widest">
               <Shield className="w-3.5 h-3.5 text-[#e8ff3b]" fill="currentColor" />
               <span>{isMounted && isTr ? 'GERÇEK ZAMANLI MAÇ OLAYLARI PROTOKOLÜ' : 'REAL-TIME MATCH EVENTS PROTOCOL'}</span>
@@ -856,7 +988,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
           </div>
         ) : activeMatch.round.startsWith('Group') ? (
           /* GROUP STANDINGS TABLE */
-          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px] overflow-y-auto select-none">
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[235px] max-h-[250px] overflow-y-auto select-none">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2 mb-2">
               <div className="flex items-center gap-1.5 font-mono text-[9px] text-[#e8ff3b] uppercase tracking-widest">
                 <Users className="w-3.5 h-3.5 text-[#e8ff3b]" fill="currentColor" />
@@ -935,64 +1067,36 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
             </div>
           </div>
         ) : (
-          /* KNOCKOUT TOURNAMENT PATH */
-          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[200px] max-h-[220px] overflow-y-auto select-none">
-            <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-3 font-mono text-[9px] text-[#e8ff3b] uppercase tracking-widest">
+          /* KNOCKOUT TOURNAMENT PATH - HORIZONTAL BRACKET TREE */
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[235px] max-h-[250px] select-none overflow-hidden">
+            <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-2 font-mono text-[9px] text-[#e8ff3b] uppercase tracking-widest flex-shrink-0">
               <Trophy className="w-3.5 h-3.5 text-[#e8ff3b]" />
-              <span>{isMounted && isTr ? 'TURNUVA YOLU' : 'TOURNAMENT PATH'}</span>
+              <span>{isMounted && isTr ? 'ELEME AĞACI' : 'TOURNAMENT BRACKET'}</span>
             </div>
             
-            <div className="flex flex-col gap-2">
-              {result.matches.map((match, idx) => {
-                const isPlayed = idx < currentMatchIdx || (idx === currentMatchIdx && (matchStage === 'POST_MATCH' || matchStage === 'ELIMINATED' || matchStage === 'CHAMPION_TRANS'));
-                const isCurrent = idx === currentMatchIdx && matchStage !== 'POST_MATCH' && matchStage !== 'ELIMINATED' && matchStage !== 'CHAMPION_TRANS';
-                const isFuture = idx > currentMatchIdx;
-                const isDraw = match.teamGoals === match.opponentGoals;
-                const isGroupMatch = match.round.startsWith('Group');
+            <div className="flex-1 overflow-x-auto overflow-y-hidden pb-1 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+              <div className="flex gap-4 sm:gap-6 min-w-[500px] h-full justify-between pb-1">
+                
+                {/* Column 1: Quarter-Finals */}
+                <div className="flex flex-col justify-between gap-1 w-[160px] h-full">
+                  {renderBracketMatchBlock(result.knockoutMatches?.[0], 0)}
+                  {renderBracketMatchBlock(result.knockoutMatches?.[1], 1)}
+                  {renderBracketMatchBlock(result.knockoutMatches?.[2], 2)}
+                  {renderBracketMatchBlock(result.knockoutMatches?.[3], 3)}
+                </div>
 
-                return (
-                  <div 
-                    key={idx} 
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-[10px] font-mono transition-all ${
-                      isCurrent 
-                        ? 'border-[#e8ff3b]/40 bg-[#e8ff3b]/5 text-[#e8ff3b] shadow-[0_0_8px_rgba(232,255,59,0.1)]' 
-                        : isPlayed 
-                          ? (match.won 
-                              ? 'border-emerald-500/20 bg-emerald-950/10 text-emerald-400' 
-                              : isGroupMatch && isDraw 
-                                ? 'border-amber-500/20 bg-amber-950/10 text-amber-400'
-                                : 'border-red-500/20 bg-red-950/10 text-red-400')
-                          : 'border-zinc-800 bg-zinc-900/30 text-zinc-600'
-                    }`}
-                  >
-                    <span className="w-[52px] text-[8px] font-bold uppercase tracking-wider flex-shrink-0 text-center">
-                      {getLocalizedRound(match.round)}
-                    </span>
-                    <span className="flex-shrink-0 text-sm leading-none">{team.flag}</span>
-                    <span className="flex-1 truncate text-[9px]">
-                      {isPlayed || isCurrent 
-                        ? `vs ${match.opponentFlag} ${match.opponentName}`
-                        : `vs ???`}
-                    </span>
-                    {isPlayed && (
-                      <span className={`font-bold text-[9px] flex-shrink-0 ${
-                        match.won ? 'text-emerald-400' 
-                        : isGroupMatch && isDraw ? 'text-amber-400' 
-                        : 'text-red-400'
-                      }`}>
-                        {match.teamGoals}-{match.opponentGoals}
-                        {!isGroupMatch && isDraw && (match.won ? ' ✓p' : ' ✗p')}
-                      </span>
-                    )}
-                    {isCurrent && (
-                      <span className="text-[8px] animate-pulse flex-shrink-0 text-[#e8ff3b]">● {isMounted && isTr ? 'CANLI' : 'LIVE'}</span>
-                    )}
-                    {isFuture && (
-                      <span className="text-[8px] text-zinc-700 flex-shrink-0">—</span>
-                    )}
-                  </div>
-                );
-              })}
+                {/* Column 2: Semi-Finals */}
+                <div className="flex flex-col justify-around gap-1 w-[160px] h-full py-4">
+                  {renderBracketMatchBlock(result.knockoutMatches?.[4], 4)}
+                  {renderBracketMatchBlock(result.knockoutMatches?.[5], 5)}
+                </div>
+
+                {/* Column 3: Final */}
+                <div className="flex flex-col justify-center gap-1 w-[160px] h-full">
+                  {renderBracketMatchBlock(result.knockoutMatches?.[6], 6)}
+                </div>
+
+              </div>
             </div>
           </div>
         )}

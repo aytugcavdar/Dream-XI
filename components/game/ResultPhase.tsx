@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Player, NationalTeam, SimulationResult, GameRecord, SortKey, TournamentPlayerStat } from '@/types';
+import { Player, NationalTeam, SimulationResult, GameRecord, SortKey, TournamentPlayerStat, KnockoutMatch } from '@/types';
 import { MAX_HISTORY_RECORDS } from '@/lib/constants';
 import { Award, Trophy, ChevronRight, Sparkles, BarChart3, Medal, Calendar, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -34,7 +34,54 @@ export default function ResultPhase({
 }: ResultPhaseProps) {
   const [historyList, setHistoryList] = useState<GameRecord[]>([]);
   const [sortBy, setSortBy] = useState<SortKey>('rating');
-  const [activeStatsTab, setActiveStatsTab] = useState<'squad' | 'scorers' | 'assisters'>('squad');
+  const [activeStatsTab, setActiveStatsTab] = useState<'squad' | 'scorers' | 'assisters' | 'bracket'>('squad');
+
+  const renderBracketMatchBlock = (m: KnockoutMatch | undefined, idx: number) => {
+    if (!m) return null;
+
+    const isUserMatch = m.homeTeam.id === team.id || m.awayTeam.id === team.id;
+    const isWinnerHome = m.winnerId === m.homeTeam.id;
+    const isWinnerAway = m.winnerId === m.awayTeam.id;
+
+    // Highlight user's matches in the final bracket
+    let borderClass = 'border-zinc-900 bg-zinc-950/40 text-zinc-400';
+    if (isUserMatch) {
+      const userWon = m.winnerId === team.id;
+      borderClass = userWon
+        ? 'border-emerald-500/40 bg-emerald-950/10 text-emerald-400 font-bold'
+        : 'border-red-500/40 bg-red-950/10 text-red-400';
+    }
+
+    let scoreText = `${m.homeGoals} - ${m.awayGoals}`;
+    if (m.homePenalties !== undefined && m.awayPenalties !== undefined) {
+      scoreText += ` (${m.homePenalties}-${m.awayPenalties}p)`;
+    }
+
+    return (
+      <div key={idx} className={`p-2 sm:p-2.5 rounded-xl border text-[10px] font-mono flex flex-col gap-1 w-full flex-shrink-0 ${borderClass}`}>
+        <div className={`flex justify-between items-center ${isWinnerHome ? 'font-bold text-white' : 'text-zinc-550 line-through'}`}>
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="text-xs">{m.homeTeam.flag}</span>
+            <span className="truncate max-w-[80px] sm:max-w-[100px]">{m.homeTeam.name}</span>
+          </div>
+          {isWinnerHome && <span className="text-[9px] text-[#e8ff3b]">✓</span>}
+        </div>
+
+        <div className="flex justify-between items-center text-[9px] text-zinc-550 border-t border-b border-zinc-900/50 py-0.5 my-0.5">
+          <span>{m.round.toUpperCase()}</span>
+          <span className="font-bold text-xs text-zinc-100">{scoreText}</span>
+        </div>
+
+        <div className={`flex justify-between items-center ${isWinnerAway ? 'font-bold text-white' : 'text-zinc-550 line-through'}`}>
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="text-xs">{m.awayTeam.flag}</span>
+            <span className="truncate max-w-[80px] sm:max-w-[100px]">{m.awayTeam.name}</span>
+          </div>
+          {isWinnerAway && <span className="text-[9px] text-[#e8ff3b]">✓</span>}
+        </div>
+      </div>
+    );
+  };
   const hasSaved = useRef(false);
 
   // Load and save historic record when result mounts
@@ -461,12 +508,13 @@ export default function ResultPhase({
               <div className="flex flex-col gap-4 mb-5">
                 {/* Tabs row */}
                 <div className="flex border-b border-zinc-900 pb-1 gap-2 overflow-x-auto scrollbar-none">
-                  {(['squad', 'scorers', 'assisters'] as const).map((tabId) => {
+                  {(['squad', 'scorers', 'assisters', 'bracket'] as const).map((tabId) => {
                     const isActive = activeStatsTab === tabId;
                     let tabLabel = '';
                     if (tabId === 'squad') tabLabel = isMounted ? t('result_tab_squad') : 'My Squad';
                     else if (tabId === 'scorers') tabLabel = isMounted ? t('result_tab_scorers') : 'Top Scorers';
                     else if (tabId === 'assisters') tabLabel = isMounted ? t('result_tab_assisters') : 'Top Assisters';
+                    else if (tabId === 'bracket') tabLabel = isMounted ? t('sim_tab_bracket') : 'Tournament Bracket';
 
                     return (
                       <button
@@ -491,10 +539,13 @@ export default function ResultPhase({
                       {activeStatsTab === 'squad' && (isMounted ? (language === 'en' ? 'Squad Tournament Metrics' : 'Takım Turnuva İstatistikleri') : 'Squad Tournament Metrics')}
                       {activeStatsTab === 'scorers' && (isMounted ? t('result_tournament_scorers') : 'Tournament Top Scorers')}
                       {activeStatsTab === 'assisters' && (isMounted ? t('result_tournament_assisters') : 'Tournament Top Assisters')}
+                      {activeStatsTab === 'bracket' && (isMounted ? t('sim_tab_bracket') : 'Tournament Bracket')}
                     </h3>
-                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">
-                      {isMounted ? (language === 'en' ? 'click info button for bio logs' : 'biyografi kayıtları için bilgi butonuna tıklayın') : 'click info button for bio logs'}
-                    </p>
+                    {activeStatsTab !== 'bracket' && (
+                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase">
+                        {isMounted ? (language === 'en' ? 'click info button for bio logs' : 'biyografi kayıtları için bilgi butonuna tıklayın') : 'click info button for bio logs'}
+                      </p>
+                    )}
                   </div>
 
                   {activeStatsTab === 'squad' && (
@@ -549,8 +600,36 @@ export default function ResultPhase({
 
             {/* Dense Spreadsheet List */}
             <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
-              {(activeStatsTab === 'squad' || !result.tournamentStats) && sortedSeasonPlayers.map((statsRow, idx) => {
-                const isMVP = statsRow.playerId === result.mvp.id;
+              {activeStatsTab === 'bracket' ? (
+                /* RENDER COMPLETED BRACKET TREE */
+                <div className="w-full overflow-x-auto overflow-y-hidden pb-3 pt-1 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+                  <div className="flex gap-4 sm:gap-6 min-w-[500px] justify-between pb-1">
+                    
+                    {/* Column 1: Quarter-Finals */}
+                    <div className="flex flex-col justify-between gap-1 w-[160px] min-h-[300px]">
+                      {renderBracketMatchBlock(result.knockoutMatches?.[0], 0)}
+                      {renderBracketMatchBlock(result.knockoutMatches?.[1], 1)}
+                      {renderBracketMatchBlock(result.knockoutMatches?.[2], 2)}
+                      {renderBracketMatchBlock(result.knockoutMatches?.[3], 3)}
+                    </div>
+
+                    {/* Column 2: Semi-Finals */}
+                    <div className="flex flex-col justify-around gap-1 w-[160px] min-h-[300px] py-6">
+                      {renderBracketMatchBlock(result.knockoutMatches?.[4], 4)}
+                      {renderBracketMatchBlock(result.knockoutMatches?.[5], 5)}
+                    </div>
+
+                    {/* Column 3: Final */}
+                    <div className="flex flex-col justify-center gap-1 w-[160px] min-h-[300px]">
+                      {renderBracketMatchBlock(result.knockoutMatches?.[6], 6)}
+                    </div>
+
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {(activeStatsTab === 'squad' || !result.tournamentStats) && sortedSeasonPlayers.map((statsRow, idx) => {
+                    const isMVP = statsRow.playerId === result.mvp.id;
                 
                 // Let's resolve the player object
                 const details = getPlayerDetails(statsRow.playerId);
@@ -777,6 +856,8 @@ export default function ResultPhase({
                   </div>
                 );
               })}
+                </>
+              )}
             </div>
           </div>
 

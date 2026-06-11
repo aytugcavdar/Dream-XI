@@ -1,4 +1,4 @@
-import { GameState, MatchEvent, MatchResult, NationalTeam, Player, PlayerMatchStats, PlayerSeasonStats, SimulationResult, GroupData, GroupStanding, GroupMatch, TournamentPlayerStat } from '../types';
+import { GameState, MatchEvent, MatchResult, NationalTeam, Player, PlayerMatchStats, PlayerSeasonStats, SimulationResult, GroupData, GroupStanding, GroupMatch, TournamentPlayerStat, KnockoutMatch } from '../types';
 import { teams } from '../data/teams';
 import { getPlayersByTeamAndYear } from '../data/players';
 import { PARTNERSHIPS, type TacticalStyleId } from './constants';
@@ -656,78 +656,171 @@ export function simulate(state: GameState): SimulationResult {
   let tournamentWon = true;
   let exitRound: SimulationResult['exitRound'] = 'Champion';
   let finalScore = '';
+  const knockoutMatches: KnockoutMatch[] = [];
 
   const userStandingIdx = standingsA.findIndex(s => s.teamId === selectedTeam.id);
   const userQualified = userStandingIdx >= 0 && userStandingIdx < 2;
+
+  // Proceed to Knockout Stage (Quarter-Finals)
+  const getTeamById = (id: string) => teams.find(t => t.id === id)!;
+  const qf1_teams = [getTeamById(standingsA[0].teamId), getTeamById(standingsB[1].teamId)];
+  const qf2_teams = [getTeamById(standingsB[0].teamId), getTeamById(standingsA[1].teamId)];
+  const qf3_teams = [getTeamById(standingsC[0].teamId), getTeamById(standingsD[1].teamId)];
+  const qf4_teams = [getTeamById(standingsD[0].teamId), getTeamById(standingsC[1].teamId)];
+
+  const simBgKnockoutMatch = (
+    teamX: NationalTeam,
+    teamY: NationalTeam,
+    round: KnockoutMatch['round']
+  ): NationalTeam => {
+    const playersX = teamPlayersMap[teamX.id] || [];
+    const playersY = teamPlayersMap[teamY.id] || [];
+    const res = simulateNonUserMatch(teamX, teamY, rng);
+    
+    for (let i = 0; i < res.goalsA; i++) {
+      if (playersX.length > 0) {
+        const scorer = chooseShooter(playersX, STYLE_PROFILES['tiki-taka'], rng);
+        recordStats(scorer, teamX, true);
+        if (rng() < 0.75) {
+          const assister = chooseAssister(playersX, scorer, rng);
+          recordStats(assister, teamX, false);
+        }
+      }
+    }
+    for (let i = 0; i < res.goalsB; i++) {
+      if (playersY.length > 0) {
+        const scorer = chooseShooter(playersY, STYLE_PROFILES['tiki-taka'], rng);
+        recordStats(scorer, teamY, true);
+        if (rng() < 0.75) {
+          const assister = chooseAssister(playersY, scorer, rng);
+          recordStats(assister, teamY, false);
+        }
+      }
+    }
+    
+    let homePenalties: number | undefined;
+    let awayPenalties: number | undefined;
+    let winnerId = '';
+
+    if (res.goalsA > res.goalsB) {
+      winnerId = teamX.id;
+    } else if (res.goalsB > res.goalsA) {
+      winnerId = teamY.id;
+    } else {
+      // Penalty shootout
+      const coin = rng();
+      if (coin < 0.5) {
+        homePenalties = 5;
+        awayPenalties = 3 + Math.floor(rng() * 2);
+        winnerId = teamX.id;
+      } else {
+        awayPenalties = 5;
+        homePenalties = 3 + Math.floor(rng() * 2);
+        winnerId = teamY.id;
+      }
+    }
+
+    knockoutMatches.push({
+      round,
+      homeTeam: teamX,
+      awayTeam: teamY,
+      homeGoals: res.goalsA,
+      awayGoals: res.goalsB,
+      homePenalties,
+      awayPenalties,
+      winnerId
+    });
+
+    return winnerId === teamX.id ? teamX : teamY;
+  };
+
+  const processMatchStats = (matchResult: MatchResult, opp: NationalTeam, oppPlayers: Player[]) => {
+    matchResult.events?.forEach(evt => {
+      if (evt.type === 'goal') {
+        if (evt.team === 'user') {
+          const scorer = squadPlayers.find(p => p.id === evt.playerId);
+          if (scorer) recordStats(scorer, selectedTeam, true);
+          if (evt.assistPlayerId) {
+            const assister = squadPlayers.find(p => p.id === evt.assistPlayerId);
+            if (assister) recordStats(assister, selectedTeam, false);
+          }
+        } else if (evt.team === 'opponent') {
+          const scorer = oppPlayers.find(p => p.id === evt.playerId);
+          if (scorer) recordStats(scorer, opp, true);
+          if (evt.assistPlayerId) {
+            const assister = oppPlayers.find(p => p.id === evt.assistPlayerId);
+            if (assister) recordStats(assister, opp, false);
+          }
+        }
+      }
+    });
+  };
+
+  const recordUserKnockoutMatch = (
+    round: KnockoutMatch['round'],
+    homeTeam: NationalTeam,
+    awayTeam: NationalTeam,
+    matchResult: MatchResult
+  ) => {
+    let homePenalties: number | undefined;
+    let awayPenalties: number | undefined;
+    if (matchResult.teamGoals === matchResult.opponentGoals) {
+      const userIsHome = homeTeam.id === selectedTeam.id;
+      if (matchResult.won) {
+        if (userIsHome) {
+          homePenalties = 5;
+          awayPenalties = 3 + Math.floor(rng() * 2);
+        } else {
+          awayPenalties = 5;
+          homePenalties = 3 + Math.floor(rng() * 2);
+        }
+      } else {
+        if (userIsHome) {
+          homePenalties = 3 + Math.floor(rng() * 2);
+          awayPenalties = 5;
+        } else {
+          awayPenalties = 3 + Math.floor(rng() * 2);
+          homePenalties = 5;
+        }
+      }
+    }
+
+    const userIsHome = homeTeam.id === selectedTeam.id;
+    const homeGoals = userIsHome ? matchResult.teamGoals : matchResult.opponentGoals;
+    const awayGoals = userIsHome ? matchResult.opponentGoals : matchResult.teamGoals;
+
+    knockoutMatches.push({
+      round,
+      homeTeam,
+      awayTeam,
+      homeGoals,
+      awayGoals,
+      homePenalties,
+      awayPenalties,
+      winnerId: matchResult.won ? selectedTeam.id : (userIsHome ? awayTeam.id : homeTeam.id)
+    });
+  };
 
   if (!userQualified) {
     tournamentWon = false;
     exitRound = 'Group Stage';
     const lastMatch = matches[matches.length - 1];
     finalScore = `${lastMatch.teamGoals}-${lastMatch.opponentGoals}`;
+
+    // Simulate entire knockout in background since user didn't qualify
+    const winnerQF1 = simBgKnockoutMatch(qf1_teams[0], qf1_teams[1], 'Quarter-Finals');
+    const winnerQF2 = simBgKnockoutMatch(qf2_teams[0], qf2_teams[1], 'Quarter-Finals');
+    const winnerQF3 = simBgKnockoutMatch(qf3_teams[0], qf3_teams[1], 'Quarter-Finals');
+    const winnerQF4 = simBgKnockoutMatch(qf4_teams[0], qf4_teams[1], 'Quarter-Finals');
+
+    const winnerSF1 = simBgKnockoutMatch(winnerQF1, winnerQF3, 'Semi-Finals');
+    const winnerSF2 = simBgKnockoutMatch(winnerQF2, winnerQF4, 'Semi-Finals');
+
+    simBgKnockoutMatch(winnerSF1, winnerSF2, 'Final');
   } else {
-    // Proceed to Knockout Stage (Quarter-Finals)
-    const getTeamById = (id: string) => teams.find(t => t.id === id)!;
-    const qf1_teams = [getTeamById(standingsA[0].teamId), getTeamById(standingsB[1].teamId)];
-    const qf2_teams = [getTeamById(standingsB[0].teamId), getTeamById(standingsA[1].teamId)];
-    const qf3_teams = [getTeamById(standingsC[0].teamId), getTeamById(standingsD[1].teamId)];
-    const qf4_teams = [getTeamById(standingsD[0].teamId), getTeamById(standingsC[1].teamId)];
-
-    const simBgKnockoutMatch = (teamX: NationalTeam, teamY: NationalTeam): NationalTeam => {
-      const playersX = teamPlayersMap[teamX.id] || [];
-      const playersY = teamPlayersMap[teamY.id] || [];
-      const res = simulateNonUserMatch(teamX, teamY, rng);
-      
-      for (let i = 0; i < res.goalsA; i++) {
-        if (playersX.length > 0) {
-          const scorer = chooseShooter(playersX, STYLE_PROFILES['tiki-taka'], rng);
-          recordStats(scorer, teamX, true);
-          if (rng() < 0.75) {
-            const assister = chooseAssister(playersX, scorer, rng);
-            recordStats(assister, teamX, false);
-          }
-        }
-      }
-      for (let i = 0; i < res.goalsB; i++) {
-        if (playersY.length > 0) {
-          const scorer = chooseShooter(playersY, STYLE_PROFILES['tiki-taka'], rng);
-          recordStats(scorer, teamY, true);
-          if (rng() < 0.75) {
-            const assister = chooseAssister(playersY, scorer, rng);
-            recordStats(assister, teamY, false);
-          }
-        }
-      }
-      
-      if (res.goalsA > res.goalsB) return teamX;
-      if (res.goalsB > res.goalsA) return teamY;
-      return rng() < 0.5 ? teamX : teamY;
-    };
-
-    const processMatchStats = (matchResult: MatchResult, opp: NationalTeam, oppPlayers: Player[]) => {
-      matchResult.events?.forEach(evt => {
-        if (evt.type === 'goal') {
-          if (evt.team === 'user') {
-            const scorer = squadPlayers.find(p => p.id === evt.playerId);
-            if (scorer) recordStats(scorer, selectedTeam, true);
-            if (evt.assistPlayerId) {
-              const assister = squadPlayers.find(p => p.id === evt.assistPlayerId);
-              if (assister) recordStats(assister, selectedTeam, false);
-            }
-          } else if (evt.team === 'opponent') {
-            const scorer = oppPlayers.find(p => p.id === evt.playerId);
-            if (scorer) recordStats(scorer, opp, true);
-            if (evt.assistPlayerId) {
-              const assister = oppPlayers.find(p => p.id === evt.assistPlayerId);
-              if (assister) recordStats(assister, opp, false);
-            }
-          }
-        }
-      });
-    };
-
     // QUARTER-FINALS
     const userInQF1 = standingsA[0].teamId === selectedTeam.id;
+    const userInQF2 = standingsA[1].teamId === selectedTeam.id;
     let winnerQF1: NationalTeam;
     let winnerQF2: NationalTeam;
     
@@ -750,8 +843,9 @@ export function simulate(state: GameState): SimulationResult {
       });
       processMatchStats(qfMatch, qf1_teams[1], teamPlayersMap[qf1_teams[1].id] || []);
       winnerQF1 = qfMatch.won ? selectedTeam : qf1_teams[1];
+      recordUserKnockoutMatch('Quarter-Finals', qf1_teams[0], qf1_teams[1], qfMatch);
       
-      winnerQF2 = simBgKnockoutMatch(qf2_teams[0], qf2_teams[1]);
+      winnerQF2 = simBgKnockoutMatch(qf2_teams[0], qf2_teams[1], 'Quarter-Finals');
     } else {
       const qf2Match = simulateMatch({
         round: 'Quarter-Finals',
@@ -771,19 +865,26 @@ export function simulate(state: GameState): SimulationResult {
       });
       processMatchStats(qf2Match, qf2_teams[0], teamPlayersMap[qf2_teams[0].id] || []);
       winnerQF2 = qf2Match.won ? selectedTeam : qf2_teams[0];
+      recordUserKnockoutMatch('Quarter-Finals', qf2_teams[0], qf2_teams[1], qf2Match);
       
-      winnerQF1 = simBgKnockoutMatch(qf1_teams[0], qf1_teams[1]);
+      winnerQF1 = simBgKnockoutMatch(qf1_teams[0], qf1_teams[1], 'Quarter-Finals');
     }
 
-    const winnerQF3 = simBgKnockoutMatch(qf3_teams[0], qf3_teams[1]);
-    const winnerQF4 = simBgKnockoutMatch(qf4_teams[0], qf4_teams[1]);
+    const winnerQF3 = simBgKnockoutMatch(qf3_teams[0], qf3_teams[1], 'Quarter-Finals');
+    const winnerQF4 = simBgKnockoutMatch(qf4_teams[0], qf4_teams[1], 'Quarter-Finals');
 
-    const qfMatchResult = matches[matches.length - 1];
-    
-    if (!qfMatchResult.won) {
+    const userWonQF = userInQF1 ? winnerQF1.id === selectedTeam.id : winnerQF2.id === selectedTeam.id;
+
+    if (!userWonQF) {
       tournamentWon = false;
       exitRound = 'Quarter-Finals';
+      const qfMatchResult = matches[matches.length - 1];
       finalScore = qfMatchResult.teamGoals === qfMatchResult.opponentGoals ? `${qfMatchResult.teamGoals}-${qfMatchResult.opponentGoals} (Lost pens)` : `${qfMatchResult.teamGoals}-${qfMatchResult.opponentGoals}`;
+
+      // Simulate SF and Final in background
+      const winnerSF1 = simBgKnockoutMatch(winnerQF1, winnerQF3, 'Semi-Finals');
+      const winnerSF2 = simBgKnockoutMatch(winnerQF2, winnerQF4, 'Semi-Finals');
+      simBgKnockoutMatch(winnerSF1, winnerSF2, 'Final');
     } else {
       // SEMI-FINALS
       const userInSF1 = winnerQF1.id === selectedTeam.id;
@@ -809,8 +910,9 @@ export function simulate(state: GameState): SimulationResult {
         });
         processMatchStats(sfMatch, winnerQF3, teamPlayersMap[winnerQF3.id] || []);
         winnerSF1 = sfMatch.won ? selectedTeam : winnerQF3;
+        recordUserKnockoutMatch('Semi-Finals', winnerQF1, winnerQF3, sfMatch);
 
-        winnerSF2 = simBgKnockoutMatch(winnerQF2, winnerQF4);
+        winnerSF2 = simBgKnockoutMatch(winnerQF2, winnerQF4, 'Semi-Finals');
       } else {
         const sf2Match = simulateMatch({
           round: 'Semi-Finals',
@@ -830,16 +932,21 @@ export function simulate(state: GameState): SimulationResult {
         });
         processMatchStats(sf2Match, winnerQF4, teamPlayersMap[winnerQF4.id] || []);
         winnerSF2 = sf2Match.won ? selectedTeam : winnerQF4;
+        recordUserKnockoutMatch('Semi-Finals', winnerQF2, winnerQF4, sf2Match);
 
-        winnerSF1 = simBgKnockoutMatch(winnerQF1, winnerQF3);
+        winnerSF1 = simBgKnockoutMatch(winnerQF1, winnerQF3, 'Semi-Finals');
       }
 
-      const sfMatchResult = matches[matches.length - 1];
-      
-      if (!sfMatchResult.won) {
+      const userWonSF = userInSF1 ? winnerSF1.id === selectedTeam.id : winnerSF2.id === selectedTeam.id;
+
+      if (!userWonSF) {
         tournamentWon = false;
         exitRound = 'Semi-Finals';
+        const sfMatchResult = matches[matches.length - 1];
         finalScore = sfMatchResult.teamGoals === sfMatchResult.opponentGoals ? `${sfMatchResult.teamGoals}-${sfMatchResult.opponentGoals} (Lost pens)` : `${sfMatchResult.teamGoals}-${sfMatchResult.opponentGoals}`;
+
+        // Simulate Final in background
+        simBgKnockoutMatch(winnerSF1, winnerSF2, 'Final');
       } else {
         // FINAL
         const opponentFinalist = winnerSF1.id === selectedTeam.id ? winnerSF2 : winnerSF1;
@@ -860,6 +967,9 @@ export function simulate(state: GameState): SimulationResult {
           matchPerformanceLogs[stat.playerId]?.push(stat);
         });
         processMatchStats(finalMatch, opponentFinalist, teamPlayersMap[opponentFinalist.id] || []);
+        
+        const userIsHome = winnerSF1.id === selectedTeam.id;
+        recordUserKnockoutMatch('Final', userIsHome ? selectedTeam : opponentFinalist, userIsHome ? opponentFinalist : selectedTeam, finalMatch);
 
         if (!finalMatch.won) {
           tournamentWon = false;
@@ -944,6 +1054,7 @@ export function simulate(state: GameState): SimulationResult {
     tournamentStats: {
       topScorers,
       topAssisters
-    }
+    },
+    knockoutMatches
   };
 }

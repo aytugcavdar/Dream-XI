@@ -599,7 +599,7 @@ export default function ResultPhase({
             )}
 
             {/* Dense Spreadsheet List */}
-            <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
+            <div className={`space-y-1.5 pr-1 ${activeStatsTab === 'bracket' ? 'min-h-[390px] sm:min-h-[440px]' : 'max-h-[380px] overflow-y-auto'}`}>
               {activeStatsTab === 'bracket' ? (
                 /* RENDER COMPLETED BRACKET TREE */
                 <div className="w-full overflow-x-auto overflow-y-hidden pb-3 pt-1 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">

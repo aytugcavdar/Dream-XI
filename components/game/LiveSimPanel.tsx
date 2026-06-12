@@ -1068,7 +1068,7 @@ export default function LiveSimPanel({ team, year, result, onComplete }: LiveSim
           </div>
         ) : (
           /* KNOCKOUT TOURNAMENT PATH - HORIZONTAL BRACKET TREE */
-          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[235px] max-h-[250px] select-none overflow-hidden">
+          <div className="flex flex-col flex-1 bg-black/95 border border-zinc-900 rounded-2xl p-4 min-h-[390px] sm:min-h-[440px] select-none overflow-hidden">
             <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-2 mb-2 font-mono text-[9px] text-[#e8ff3b] uppercase tracking-widest flex-shrink-0">
               <Trophy className="w-3.5 h-3.5 text-[#e8ff3b]" />
               <span>{isMounted && isTr ? 'ELEME AĞACI' : 'TOURNAMENT BRACKET'}</span>
